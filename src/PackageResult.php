@@ -40,6 +40,65 @@ final class PackageResult
         $this->findings[$finding->capability->value][] = $finding;
     }
 
+    /**
+     * Call graph material, merged across packages by CapabilityGraph.
+     * Nodes are lowercase "class::method" or "fn:name"; "class::*" means the
+     * whole class (used for `new Class`).
+     *
+     * @var array<string, array<string, true>> node => own capabilities
+     */
+    public array $nodeCaps = [];
+
+    /** @var array<string, array<string, array{string, int, string, string}>> from node ('' = top level) => to node => [file, line, context, display target] */
+    public array $edges = [];
+
+    /** @var array<string, true> classes declared in this package (lowercase FQN) */
+    public array $classes = [];
+
+    /** @var array<string, true> functions declared in this package (lowercase FQN) */
+    public array $functions = [];
+
+    /** @var array<string, string> class => parent class (lowercase FQN) */
+    public array $parents = [];
+
+    /** @var array<string, true> "class::method" for every method declared in this package */
+    public array $methods = [];
+
+    /**
+     * Capabilities reached through other packages, filled in by CapabilityGraph
+     * after all packages are analyzed (never cached).
+     *
+     * @var array<string, array<string, array{string, int, string, string, string}>> capability => origin package => [file, line, context, target, package called directly]
+     */
+    public array $via = [];
+
+    /** @var array<string, true> packages whose code this one calls directly, filled in by CapabilityGraph */
+    public array $callsInto = [];
+
+    public function addNodeCap(string $node, Capability $cap): void
+    {
+        $this->nodeCaps[$node][$cap->value] = true;
+    }
+
+    public function addEdge(string $from, string $to, string $file, int $line, string $context, string $display): void
+    {
+        $this->edges[$from][$to] ??= [$file, $line, $context, $display];
+    }
+
+    /** @return list<string> "CAP via package", sorted */
+    public function viaList(): array
+    {
+        $out = [];
+        foreach ($this->via as $cap => $origins) {
+            foreach (array_keys($origins) as $origin) {
+                $out[] = "$cap via $origin";
+            }
+        }
+        sort($out);
+
+        return $out;
+    }
+
     /** @var array<string, array<int, true>> file => lines where a path/URL argument comes from the caller */
     public array $callerPathSites = [];
 
@@ -98,11 +157,18 @@ final class PackageResult
             'version' => $this->version,
             'capabilities' => array_map(static fn (Capability $c) => $c->value, $this->capabilities()),
             'triggers' => $this->triggers(),
+            'via' => $this->viaList(),
             'files' => $this->files,
             'callbacks' => $this->callbacks,
         ];
         if ($withEvidence) {
             $out['evidence'] = array_map(static fn (Finding $f) => $f->toArray(), $this->findings());
+            $out['via_evidence'] = [];
+            foreach ($this->via as $cap => $origins) {
+                foreach ($origins as $origin => [$file, $line, $context, $target]) {
+                    $out['via_evidence'][] = ['capability' => $cap, 'via' => $origin, 'target' => $target, 'file' => $file, 'line' => $line, 'context' => $context];
+                }
+            }
         }
 
         return $out;

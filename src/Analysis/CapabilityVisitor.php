@@ -161,9 +161,11 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         if ($fn instanceof Stmt\Function_) {
             $context = ($fn->namespacedName?->toString() ?? $fn->name->toString()) . '()';
             $scope = $parent->child($class, $context, false);
+            $scope->node = 'fn:' . strtolower($fn->namespacedName?->toString() ?? $fn->name->toString());
         } elseif ($fn instanceof Stmt\ClassMethod) {
             $context = (end($this->classNames) ?: 'class@anonymous') . '::' . $fn->name->toString() . '()';
             $scope = $parent->child($class, $context, false);
+            $scope->node = $class !== null ? $class . '::' . strtolower($fn->name->toString()) : '';
         } elseif ($fn instanceof Expr\ArrowFunction) {
             $scope = $parent->child($class, $parent->context . ' {fn}', true);
         } else {
@@ -176,6 +178,15 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             $scope = $parent->child($class, $parent->context . ' {closure}', false, $captured);
         }
         // Parameters are caller-provided; leaving them unset makes them external.
+        // Their declared classes are known, which is what method calls need.
+        foreach ($fn->getParams() as $param) {
+            if ($param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                $types = PackageIndex::typeClasses($param->type, $class);
+                if ($types !== []) {
+                    $scope->types[$param->var->name] = $types;
+                }
+            }
+        }
         $this->scopes[] = $scope;
     }
 
@@ -204,7 +215,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         if ($scope->loopDepth > 0 && self::buildsStringFrom($node->expr, $name)) {
             $value = $value->withTaint();
         }
-        $scope->assign($name, $value);
+        $scope->assign($name, $value, $this->classesOf($node->expr, $scope));
         if ($node->expr instanceof Expr\Closure || $node->expr instanceof Expr\ArrowFunction) {
             $scope->closures[$name] = [$node->expr, $scope];
         }
@@ -277,6 +288,11 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             return;
         }
         $declared = $this->eval->declaredFunction($node->name);
+        $plain = ltrim($node->name->toString(), '\\');
+        if ($declared !== null || str_contains($plain, '\\')) {
+            $fqn = $declared ?? strtolower($plain);
+            $this->result->addEdge($scope->node, 'fn:' . $fqn, $this->relFile, $node->getStartLine(), $scope->context, $plain . '()');
+        }
         if ($declared !== null) {
             if (isset($this->index->functionNodes[$declared])) {
                 [$fn, $abs, $rel] = $this->index->functionNodes[$declared];
@@ -468,6 +484,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
 
     private function newObject(Expr\New_ $node, Scope $scope): void
     {
+        foreach ($this->newClasses($node, $scope) as $class) {
+            $this->edge($class, '*', $node, $scope);
+        }
         $args = $node->getArgs();
         if ($node->class instanceof Node\Name) {
             $class = strtolower(ltrim($node->class->toString(), '\\'));
@@ -520,6 +539,16 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         if (in_array($class, ['self', 'static'], true)) {
             $this->replayMethod($this->currentClass(), $method, $node, $scope);
         }
+        if ($class !== null) {
+            $target = $this->eval->classRef($node->class, $scope);
+            if ($target !== null) {
+                $this->edge($target, $node->name->toString(), $node, $scope);
+            }
+        } else {
+            foreach ($this->eval->eval($node->class, $scope)->strings as $dynamic) {
+                $this->edge($dynamic, $node->name->toString(), $node, $scope);
+            }
+        }
         foreach (Sinks::STATIC_METHODS["$class::$method"] ?? [] as $cap) {
             $this->add($cap, "$class::$method()", $node);
         }
@@ -536,9 +565,86 @@ final class CapabilityVisitor extends NodeVisitorAbstract
      */
     private function methodCall(Expr\MethodCall|Expr\NullsafeMethodCall $node, Scope $scope): void
     {
-        if ($node->var instanceof Expr\Variable && $node->var->name === 'this' && $node->name instanceof Node\Identifier) {
-            $this->replayMethod($this->currentClass(), $node->name->toString(), $node, $scope);
+        if (!$node->name instanceof Node\Identifier) {
+            return;
         }
+        $method = $node->name->toString();
+        if ($node->var instanceof Expr\Variable && $node->var->name === 'this') {
+            $this->replayMethod($this->currentClass(), $method, $node, $scope);
+        }
+        foreach ($this->classesOf($node->var, $scope) as $class) {
+            $this->edge($class, $method, $node, $scope);
+        }
+    }
+
+    /**
+     * Which classes an expression may evaluate to an instance of, as far as
+     * declarations and `new` tell us: $this, typed parameters and
+     * properties, variables assigned from `new`, and `new` itself.
+     *
+     * @return list<string> lowercase FQN
+     */
+    private function classesOf(Expr $e, Scope $scope): array
+    {
+        if ($e instanceof Expr\Variable && $e->name === 'this') {
+            return $this->currentClass() !== null ? [$this->currentClass()] : [];
+        }
+        if ($e instanceof Expr\Variable && is_string($e->name)) {
+            return $scope->types[$e->name] ?? [];
+        }
+        if ($e instanceof Expr\New_) {
+            return $this->newClasses($e, $scope);
+        }
+        if (($e instanceof Expr\PropertyFetch || $e instanceof Expr\NullsafePropertyFetch)
+            && $e->var instanceof Expr\Variable && $e->var->name === 'this' && $e->name instanceof Node\Identifier) {
+            for ($c = $this->currentClass(), $i = 0; $c !== null && $i < 8; $c = $this->index->parents[$c] ?? null, $i++) {
+                if (isset($this->index->propertyTypes[$c][$e->name->toString()])) {
+                    return $this->index->propertyTypes[$c][$e->name->toString()];
+                }
+            }
+        }
+        if ($e instanceof Expr\Assign) {
+            return $this->classesOf($e->expr, $scope);
+        }
+
+        return [];
+    }
+
+    /** @return list<string> */
+    private function newClasses(Expr\New_ $e, Scope $scope): array
+    {
+        if ($e->class instanceof Node\Name) {
+            $c = $this->eval->classRef($e->class, $scope);
+
+            return $c !== null ? [$c] : [];
+        }
+        if ($e->class instanceof Stmt\Class_) {
+            return [];
+        }
+        $v = $this->eval->eval($e->class, $scope);
+
+        return array_values(array_map(static fn (string $s) => strtolower(ltrim($s, '\\')), $v->strings));
+    }
+
+    /**
+     * Record that the current code calls $class::$method ('*' for the whole
+     * class). Resolved across packages by CapabilityGraph.
+     */
+    private function edge(string $class, string $method, Node $node, Scope $scope): void
+    {
+        $class = strtolower(ltrim($class, '\\'));
+        if ($class === '' || in_array($class, ['self', 'static', 'parent'], true)) {
+            return;
+        }
+        $target = $method === '*' ? "$class::*" : $class . '::' . strtolower($method);
+        $display = $this->displayClass($class) . ($method === '*' ? '' : '::' . $method . '()');
+        $this->result->addEdge($scope->node, $target, $this->relFile, $node->getStartLine(), $scope->context, ($method === '*' ? 'new ' : '') . $display);
+    }
+
+    /** Best-effort display name; class names are case-insensitive in PHP. */
+    private function displayClass(string $lower): string
+    {
+        return implode('\\', array_map('ucfirst', explode('\\', $lower)));
     }
 
     private function replayMethod(?string $class, string $method, Expr\CallLike $node, Scope $scope): void
@@ -595,6 +701,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             $inner = ($defining ?? $scope)->child($class, $context, false, $uses);
         } else {
             $inner = new Scope($class, $context);
+            $inner->node = $fn instanceof Stmt\Function_
+                ? 'fn:' . strtolower($fn->namespacedName?->toString() ?? $fn->name->toString())
+                : ($class !== null && $fn instanceof Stmt\ClassMethod ? $class . '::' . strtolower($fn->name->toString()) : '');
         }
         foreach ($fn->getParams() as $i => $param) {
             if ($param->variadic || !isset($args[$i])) {
@@ -716,6 +825,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
 
     private function add(C $cap, string $sink, Node $node, string $note = ''): void
     {
+        if ($this->scope()->node !== '') {
+            $this->result->addNodeCap($this->scope()->node, $cap);
+        }
         $this->result->add(new Finding($cap, $sink, $this->relFile, $node->getStartLine(), $this->scope()->context, $note));
     }
 

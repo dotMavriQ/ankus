@@ -20,6 +20,12 @@ final class Scope
     /** @var array<string, array{\PhpParser\Node\Expr\Closure|\PhpParser\Node\Expr\ArrowFunction, Scope}> closures assigned to variables, with their defining scope */
     public array $closures = [];
 
+    /** @var array<string, list<string>> variable => classes it may hold (lowercase FQN), from type hints and `new` */
+    public array $types = [];
+
+    /** Call-graph node this code belongs to ("class::method", "fn:name", or '' for top-level code). */
+    public string $node = '';
+
     public function __construct(
         public readonly ?string $class,
         public readonly string $context,
@@ -41,9 +47,12 @@ final class Scope
         return isset($this->vars[$name]);
     }
 
-    public function assign(string $name, Value $value): void
+    public function assign(string $name, Value $value, array $types = []): void
     {
         unset($this->closures[$name]);
+        if ($types !== [] || $this->branchDepth === 0) {
+            $this->types[$name] = $this->branchDepth > 0 ? array_values(array_unique([...($this->types[$name] ?? []), ...$types])) : $types;
+        }
         if ($this->branchDepth > 0 && isset($this->vars[$name])) {
             $value = $this->vars[$name]->union($value);
         }
@@ -53,9 +62,11 @@ final class Scope
     public function child(?string $class, string $context, bool $inherit, array $captured = []): self
     {
         $child = new self($class, $context);
+        $child->node = $this->node;
         if ($inherit) {
             $child->vars = $this->vars;
             $child->closures = $this->closures;
+            $child->types = $this->types;
         }
         foreach ($captured as $name) {
             if (isset($this->vars[$name])) {
@@ -63,6 +74,9 @@ final class Scope
             }
             if (isset($this->closures[$name])) {
                 $child->closures[$name] = $this->closures[$name];
+            }
+            if (isset($this->types[$name])) {
+                $child->types[$name] = $this->types[$name];
             }
         }
 

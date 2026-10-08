@@ -41,6 +41,15 @@ final class PackageIndex extends NodeVisitorAbstract
     /** @var array<string, array{Stmt\Function_, string, string}> function FQN => [node, abs file, rel file] */
     public array $functionNodes = [];
 
+    /** @var array<string, true> lowercase FQN of classes, interfaces, traits and enums declared here */
+    public array $classes = [];
+
+    /** @var array<string, true> "class::method" for every method declared here */
+    public array $methods = [];
+
+    /** @var array<string, array<string, list<string>>> class => property => declared classes (lowercase FQN) */
+    public array $propertyTypes = [];
+
     /** Set by the analyzer before each file is traversed. */
     public string $absFile = '';
     public string $relFile = '';
@@ -56,6 +65,9 @@ final class PackageIndex extends NodeVisitorAbstract
         if ($node instanceof Stmt\ClassLike) {
             $class = self::className($node);
             $this->classStack[] = $class;
+            if ($class !== null) {
+                $this->classes[$class] = true;
+            }
             if ($class !== null && $node instanceof Stmt\Class_ && $node->extends !== null) {
                 $this->parents[$class] = strtolower($node->extends->toString());
             }
@@ -66,6 +78,16 @@ final class PackageIndex extends NodeVisitorAbstract
             $this->functionStack[] = ['function', $fqn];
         } elseif ($node instanceof Stmt\ClassMethod) {
             $this->functionStack[] = ['method', strtolower($node->name->toString())];
+            $class = $this->currentClass();
+            if ($class !== null) {
+                $this->methods[$class . '::' . strtolower($node->name->toString())] = true;
+                // Promoted constructor parameters are typed properties too.
+                foreach ($node->params as $param) {
+                    if ($param->flags !== 0 && $param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                        $this->propertyTypes[$class][$param->var->name] = self::typeClasses($param->type, $class);
+                    }
+                }
+            }
         } elseif ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) {
             $this->functionStack[] = null;
         } elseif ($node instanceof Stmt\Return_ && $node->expr !== null) {
@@ -86,6 +108,7 @@ final class PackageIndex extends NodeVisitorAbstract
             $class = $this->currentClass();
             if ($class !== null) {
                 foreach ($node->props as $prop) {
+                    $this->propertyTypes[$class][$prop->name->toString()] = self::typeClasses($node->type, $class);
                     if ($prop->default !== null) {
                         $this->properties[$class][$prop->name->toString()][] = [$prop->default, $class];
                     }
@@ -158,6 +181,28 @@ final class PackageIndex extends NodeVisitorAbstract
         $c = end($this->classStack);
 
         return $c === false ? null : $c;
+    }
+
+    /**
+     * The classes a type declaration names, lowercase, without builtins.
+     *
+     * @return list<string>
+     */
+    public static function typeClasses(?Node $type, ?string $self): array
+    {
+        if ($type instanceof Node\NullableType) {
+            return self::typeClasses($type->type, $self);
+        }
+        if ($type instanceof Node\UnionType || $type instanceof Node\IntersectionType) {
+            return array_values(array_unique(array_merge(...array_map(static fn ($t) => self::typeClasses($t, $self), $type->types))));
+        }
+        if ($type instanceof Node\Name) {
+            $name = strtolower(ltrim($type->toString(), '\\'));
+
+            return in_array($name, ['self', 'static'], true) ? ($self !== null ? [$self] : []) : [$name];
+        }
+
+        return [];
     }
 
     public static function className(Stmt\ClassLike $node): ?string

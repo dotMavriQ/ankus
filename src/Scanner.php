@@ -6,6 +6,7 @@ namespace Ankus;
 
 use Ankus\Analysis\PackageAnalyzer;
 use Ankus\Cache\ResultCache;
+use Ankus\Graph\CapabilityGraph;
 
 /**
  * Analyzes many packages: cached results first, then the rest spread over
@@ -43,8 +44,10 @@ final class Scanner
             $this->cache->put($todo[$i]['fingerprint'], $result);
         }
         ksort($results);
+        $results = array_values($results);
+        CapabilityGraph::resolve($results);
 
-        return array_values($results);
+        return $results;
     }
 
     /**

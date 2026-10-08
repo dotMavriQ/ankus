@@ -6,6 +6,7 @@ namespace Ankus;
 
 use Ankus\Analysis\PackageAnalyzer;
 use Ankus\Cache\ResultCache;
+use Ankus\Graph\CapabilityGraph;
 use Ankus\Lock\Change;
 use Ankus\Lock\Lockfile;
 
@@ -133,7 +134,10 @@ final class Cli
                 'from' => $c->previousVersion,
                 'to' => $c->result?->version,
                 'gained' => $c->gained,
+                'gained_via' => $c->gainedVia,
+                'consequences' => $c->consequences,
                 'lost' => $c->lost,
+                'lost_via' => $c->lostVia,
                 'new_triggers' => $c->newTriggers,
                 'evidence' => $c->result === null ? [] : array_map(
                     static fn (Finding $f) => $f->toArray(),
@@ -152,8 +156,12 @@ final class Cli
             $r = $c->result;
             $ver = $c->isNew ? "new, {$r->version}" : ($c->previousVersion !== $r->version ? "{$c->previousVersion} -> {$r->version}" : $r->version);
             if (!$c->isViolation()) {
-                $lost = $c->lost !== [] ? ' (dropped ' . implode(', ', $c->lost) . ')' : '';
+                $dropped = [...$c->lost, ...$c->lostVia];
+                $lost = $dropped !== [] ? ' (no longer: ' . implode(', ', $dropped) . ')' : '';
                 $this->say("  ✓ {$r->name} [$ver]$lost");
+                foreach ($c->consequences as $v) {
+                    $this->say("      · now reaches $v, because " . substr($v, strrpos($v, ' ') + 1) . ' changed (reported above or below)');
+                }
                 continue;
             }
             $this->say("  ✗ {$r->name} [$ver]");
@@ -170,6 +178,16 @@ final class Cli
                 if (count($findings) > 5) {
                     $this->say('          ... and ' . (count($findings) - 5) . ' more');
                 }
+            }
+            foreach ($c->gainedVia as $v) {
+                [$cap, , $origin] = explode(' ', $v, 3);
+                [$file, $line, $context, $target, $through] = $r->via[$cap][$origin];
+                $how = $through === $origin ? '' : " through $through";
+                $this->say("      + $v  (" . Capability::from($cap)->describe() . " in $origin$how)");
+                $this->say("          $target at $file:$line in $context");
+            }
+            foreach ($c->consequences as $v) {
+                $this->say("      · now reaches $v, because " . substr($v, strrpos($v, ' ') + 1) . ' changed (reported separately)');
             }
         }
 
@@ -191,12 +209,20 @@ final class Cli
         $caps = $r->capabilities();
         $labels = array_map(static fn (Capability $c) => $c->isHighRisk() ? "!{$c->value}" : $c->value, $caps);
         $this->say(sprintf('%s %s  %s', $r->name, $r->version, $labels === [] ? '(none)' : implode(' ', $labels)));
+        if ($r->via !== []) {
+            $this->say('    via other packages: ' . implode(', ', $r->viaList()));
+        }
         foreach ($r->triggers() as $t => $detail) {
             $this->say('    ' . self::describeTrigger($t) . ": $detail");
         }
         if ($verbose) {
             foreach ($r->findings() as $f) {
                 $this->say("    {$f->capability->value}  " . self::describeFinding($f));
+            }
+            foreach ($r->via as $cap => $origins) {
+                foreach ($origins as $origin => [$file, $line, $context, $target]) {
+                    $this->say("    $cap via $origin  $target at $file:$line in $context");
+                }
             }
         }
     }
@@ -236,8 +262,10 @@ final class Cli
             throw new \InvalidArgumentException("Not a directory: $dir");
         }
         $p = Vendor::directory($dir);
+        $result = $this->analyzer->analyze($p['name'], $p['version'], $p['path'], $p['meta']);
+        CapabilityGraph::resolve([$result]);
 
-        return $this->analyzer->analyze($p['name'], $p['version'], $p['path'], $p['meta']);
+        return $result;
     }
 
     /**

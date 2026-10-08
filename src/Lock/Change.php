@@ -21,6 +21,12 @@ final readonly class Change
         public array $lost,
         public array $newTriggers,
         public ?string $removedName = null,
+        /** @var list<string> "CAP via package", newly reached through another package */
+        public array $gainedVia = [],
+        /** @var list<string> "CAP via package" gained only because that package changed */
+        public array $consequences = [],
+        /** @var list<string> "CAP via package" no longer reached */
+        public array $lostVia = [],
     ) {
     }
 
@@ -37,12 +43,13 @@ final readonly class Change
     /** Needs human approval: the package can now do something it couldn't. */
     public function isViolation(): bool
     {
-        return $this->gained !== [] || $this->newTriggers !== [];
+        return $this->gained !== [] || $this->newTriggers !== [] || $this->gainedVia !== [];
     }
 
     public function isInteresting(): bool
     {
         return $this->isViolation() || $this->lost !== [] || $this->removedName !== null
+            || $this->consequences !== [] || $this->lostVia !== []
             || ($this->result !== null && $this->previousVersion !== null && $this->previousVersion !== $this->result->version);
     }
 }

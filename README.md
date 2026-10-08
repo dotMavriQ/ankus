@@ -209,37 +209,88 @@ Two **triggers** describe when a package's code runs without anyone calling it:
 A package that gains a trigger fails `ankus check`, just like one that gains a
 capability.
 
+### Capabilities reached through other packages
+
+A package can also get a capability by calling code in another package. If
+`acme/lib` starts running `new \Symfony\Component\Process\Process([...])`,
+it can run commands without calling `exec()` itself. `ankus scan` lists these
+under "via other packages", and `ankus check` reports them like this:
+
+```
+  ✗ acme/lib [1.4.0 -> 1.4.1]
+      + EXEC via symfony/process  (runs shell commands or controls processes in symfony/process)
+          Symfony\Component\Process\Process::run() at src/Job.php:31 in Acme\Job::handle()
+```
+
+ankus follows these kinds of calls, across any number of packages:
+
+- `new Class(...)`: the code can now do anything that class can do
+- `Class::method()` and namespaced functions such as `\Vendor\run()`
+- method calls on `$this`, on parameters and properties with a declared class
+  type (including promoted constructor parameters), and on variables assigned
+  from `new`
+- methods inherited from a parent class in another package
+- class names built from strings, such as `$c = 'Vendor\\' . 'Shell'; $c::run()`
+
+If a dependency itself gains a capability, every package that already called
+into it would reach that capability too. That is reported once, under the
+dependency that changed; the packages that use it show a note but do not fail.
+
 ## The lock file
 
-`ankus.lock` is JSON. For each package it records the version and the
-approved capabilities and triggers:
+`ankus.lock` is JSON. This is the entry for `laravel/pint` in a Laravel 13
+application, exactly as `ankus lock` writes it:
 
 ```json
 {
     "_readme": "Capabilities each dependency is approved to have, written by `ankus lock`. Review changes to this file like code.",
-    "lock-version": 1,
+    "lock-version": 2,
     "packages": {
-        "guzzlehttp/guzzle": {
-            "version": "8.2.0",
-            "capabilities": ["ENV", "FILE_READ", "FILE_WRITE", "NETWORK"],
+        "laravel/pint": {
+            "version": "v1.32.1",
+            "capabilities": [],
+            "via": {
+                "ENV": [
+                    "symfony/process"
+                ],
+                "EXEC": [
+                    "symfony/process"
+                ],
+                "FILE_READ": [
+                    "symfony/finder"
+                ]
+            },
+            "calls_into": [
+                "laravel/framework",
+                "symfony/console",
+                "symfony/finder",
+                "symfony/process"
+            ],
             "triggers": []
-        },
-        "symfony/polyfill-mbstring": {
-            "version": "v1.43.0",
-            "capabilities": ["DYNAMIC_INCLUDE"],
-            "triggers": ["autoload-files"]
         }
     }
 }
 ```
 
+| Field | Meaning |
+|---|---|
+| `version` | The installed version, for reference. Changing it alone is not a failure. |
+| `capabilities` | Capabilities of the package's own code. |
+| `via` | Capabilities reached by calling other packages, and which packages they are in. |
+| `calls_into` | Every package whose code this one calls directly. Used to tell a package that started using something new apart from one whose dependency changed. |
+| `triggers` | See the triggers table under [Capabilities](#capabilities). |
+
 File names and line numbers are not stored, so the lock file only changes
-when a package's capabilities change, not every time its code moves around.
+when what a package can do changes, not every time its code moves around.
 Treat a change to it in a pull request like a change to code: someone should
 read it.
 
-A new package fails `check` if it has any capabilities or triggers. A removed
-package, or one that lost capabilities, is reported but does not fail.
+`ankus check` fails when a package gains a capability, a `via` capability or
+a trigger. A new package fails if it has any of them. A removed package, or
+one that lost capabilities, is reported but does not fail.
+
+A lock file written by an older version of ankus (`"lock-version": 1`) is
+rejected with a message asking you to run `ankus lock` again.
 
 ## How ankus decides
 
@@ -275,6 +326,12 @@ being ignored.
   `NETWORK` because it is an HTTP client. The value is in noticing *changes*.
 - It cannot tell a package misusing an ability it already had. If an HTTP
   client starts sending your data to a new host, it still only has `NETWORK`.
+- Calls to other packages are followed when the target class is known from
+  the code: `new`, static calls, `$this`, and declared parameter and property
+  types. A method called on an object whose class is not declared anywhere
+  (for example, one returned by a service container) is not followed.
+- `new Class` counts as everything that class can do, even if the code then
+  only calls a harmless method.
 - Capabilities are counted per package, including code your application never
   calls.
 - A function that accepts a file path from its caller can be given a URL.
@@ -294,9 +351,9 @@ On a fresh Laravel 13 application (109 packages, about 8,000 PHP files) on a
 
 | | Time |
 |---|---|
-| First run | 4.6 s |
-| `ankus check`, nothing changed | 0.3 s |
-| `ankus check`, one package changed | 0.45 s |
+| First run | 5.6 s |
+| `ankus check`, nothing changed | 0.6 s |
+| `ankus check`, one package changed | 0.8 s |
 
 Results are cached in `~/.cache/ankus` (or `$XDG_CACHE_HOME/ankus`). The
 cache is keyed by the contents of every analyzed file, not by version numbers,
@@ -324,6 +381,14 @@ there. There are 65 files that use a technique to hide what they do, 24
 ordinary patterns that must not be reported (for example `$pdo->exec()`, a
 namespaced `exec()` function, or callbacks), and 10 straightforward uses of
 functions such as cURL, `proc_open` and `file_put_contents`.
+
+**Capabilities through other packages** (`tests/CrossPackageTest.php`).
+Small `vendor/` directories where one package starts using another: nine ways
+of reaching a capability that must be reported (`new`, typed properties and
+parameters, static calls, aliases, class names built from strings,
+inheritance, functions, and through a third package), four references that
+grant nothing and must stay quiet, and a dependency that gains a capability,
+which must be reported once.
 
 **Real attacks** (`corpus/`). Recent Packagist supply-chain attacks whose
 malicious commits are still available, replayed as the update a victim would

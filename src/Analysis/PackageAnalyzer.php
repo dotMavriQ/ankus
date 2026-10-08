@@ -64,6 +64,11 @@ final class PackageAnalyzer
             $collect->traverse($ast);
         }
 
+        $result->classes = $index->classes;
+        $result->functions = $index->functions;
+        $result->parents = $index->parents;
+        $result->methods = $index->methods;
+
         // Pass 2: capabilities. Names must be fully resolved before the
         // visitor runs, because it evaluates subexpressions ahead of the
         // traversal reaching them.
