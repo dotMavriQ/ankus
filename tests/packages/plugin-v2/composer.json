@@ -1,0 +1,1 @@
+{ "name": "acme/http-utils", "version": "2.3.2", "type": "composer-plugin", "extra": { "class": "Acme\\Http\\Plugin" }, "autoload": { "psr-4": { "Acme\\Http\\": "src/" } } }

@@ -1,0 +1,29 @@
+{
+    "name": "ankus/ankus",
+    "description": "Capability analysis for Composer dependencies: know what your vendor code can do, and fail CI when an update gives it new powers.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["security", "supply-chain", "composer", "static-analysis", "capabilities"],
+    "require": {
+        "php": ">=8.2",
+        "nikic/php-parser": "^5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ankus\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ankus\\Tests\\": "tests/"
+        }
+    },
+    "bin": ["bin/ankus"],
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    }
+}
