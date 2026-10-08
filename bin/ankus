@@ -29,11 +29,36 @@ if ($bytes > 0 && $bytes < (1 << 30)) {
     ini_set('memory_limit', '1G');
 }
 
-foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
-    if (is_file($autoload)) {
-        require $autoload;
+// Never load the project's vendor/autoload.php: it runs every package's
+// autoload.files, which is exactly where a backdoored dependency hides
+// (the Laravel-Lang attack). Load only ankus and nikic/php-parser, by path.
+$parserDir = null;
+foreach ([__DIR__ . '/../vendor/nikic/php-parser/lib/PhpParser', __DIR__ . '/../../../nikic/php-parser/lib/PhpParser'] as $candidate) {
+    if (is_dir($candidate)) {
+        $parserDir = realpath($candidate);
         break;
     }
+}
+if ($parserDir === null) {
+    fwrite(STDERR, "ankus: nikic/php-parser not found. Run `composer install` in the ankus directory.\n");
+    exit(2);
+}
+spl_autoload_register(static function (string $class) use ($parserDir): void {
+    [$prefix, $base] = match (true) {
+        str_starts_with($class, 'Ankus\\') => ['Ankus\\', __DIR__ . '/../src'],
+        str_starts_with($class, 'PhpParser\\') => ['PhpParser\\', $parserDir],
+        default => [null, null],
+    };
+    if ($prefix !== null) {
+        $file = $base . '/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        if (is_file($file)) {
+            require $file;
+        }
+    }
+});
+if (!class_exists(PhpParser\Node\Scalar\Int_::class)) {
+    fwrite(STDERR, "ankus: needs nikic/php-parser 5.x, found an older version at $parserDir. Install ankus standalone (see README).\n");
+    exit(2);
 }
 
 exit((new Ankus\Cli())->run($argv));
