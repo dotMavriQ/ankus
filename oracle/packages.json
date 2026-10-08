@@ -1,0 +1,25 @@
+{
+    "_readme": "Packages whose own test suites exercise capability-granting code. Each is installed from source, its tests run under an Xdebug function trace with no network, and every built-in sink the package's shipped code actually called must have been predicted by ankus.",
+    "packages": [
+        { "package": "symfony/process", "skip": ["Tests"] },
+        { "package": "symfony/filesystem", "skip": ["Tests"] },
+        { "package": "symfony/finder", "skip": ["Tests"] },
+        { "package": "symfony/dotenv", "skip": ["Tests"] },
+        { "package": "symfony/mime", "skip": ["Tests"] },
+        { "package": "symfony/var-dumper", "skip": ["Tests"] },
+        { "package": "symfony/http-foundation", "skip": ["Tests"] },
+        { "package": "symfony/cache", "skip": ["Tests"] },
+        { "package": "symfony/console", "skip": ["Tests"] },
+        { "package": "vlucas/phpdotenv", "skip": ["tests"] },
+        { "package": "monolog/monolog", "skip": ["tests"] },
+        { "package": "guzzlehttp/psr7", "skip": ["tests"] },
+        { "package": "ramsey/uuid", "skip": ["tests"] },
+        { "package": "league/csv", "skip": ["tests"] },
+        { "package": "phpmailer/phpmailer", "skip": ["test"] },
+        { "package": "sebastian/environment", "skip": ["tests"] },
+        { "package": "egulias/email-validator", "skip": ["tests"] },
+        { "package": "twig/twig", "skip": ["tests"] },
+        { "package": "league/commonmark", "skip": ["tests"] },
+        { "package": "laravel/serializable-closure", "skip": ["tests"], "runner": "vendor/bin/pest" }
+    ]
+}

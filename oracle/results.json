@@ -1,0 +1,425 @@
+[
+    {
+        "package": "symfony/process",
+        "runtime_sites": 10,
+        "runtime_pairs": 7,
+        "covered": 7,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 12,
+        "static_capabilities": [
+            "ENV",
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE"
+        ],
+        "suite": {
+            "exit": 1,
+            "seconds": 18,
+            "result": "Tests: 206, Assertions: 328, Failures: 1, PHPUnit Warnings: 5, Skipped: 12."
+        }
+    },
+    {
+        "package": "symfony/filesystem",
+        "runtime_sites": 23,
+        "runtime_pairs": 4,
+        "covered": 3,
+        "caller_provided": [
+            "NETWORK: fopen() at Filesystem.php:772 arg 'http:///tmp/1791497943.9609.2047167953/bar3c356eb1'"
+        ],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 3,
+        "static_capabilities": [
+            "ENV",
+            "FILE_READ",
+            "FILE_WRITE"
+        ],
+        "suite": {
+            "exit": 1,
+            "seconds": 2,
+            "result": "Tests: 493, Assertions: 670, PHPUnit Warnings: 4, Skipped: 17."
+        }
+    },
+    {
+        "package": "symfony/finder",
+        "runtime_sites": 3,
+        "runtime_pairs": 3,
+        "covered": 3,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 3,
+        "static_capabilities": [
+            "FILE_READ"
+        ],
+        "suite": {
+            "exit": 1,
+            "seconds": 14,
+            "result": "Tests: 723, Assertions: 4503, PHPUnit Warnings: 4, Skipped: 2, Incomplete: 1."
+        }
+    },
+    {
+        "package": "symfony/dotenv",
+        "runtime_sites": 17,
+        "runtime_pairs": 5,
+        "covered": 5,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 8,
+        "static_capabilities": [
+            "DYNAMIC_INCLUDE",
+            "ENV",
+            "FILE_READ",
+            "FILE_WRITE"
+        ],
+        "suite": {
+            "exit": 1,
+            "seconds": 2,
+            "result": "Tests: 198, Assertions: 413, PHPUnit Warnings: 4."
+        }
+    },
+    {
+        "package": "symfony/mime",
+        "runtime_sites": 11,
+        "runtime_pairs": 6,
+        "covered": 5,
+        "caller_provided": [
+            "NETWORK: fopen() at Part/TextPart.php:152 arg 'http://localhost:8856/logo_symfony_header.png'"
+        ],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 8,
+        "static_capabilities": [
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 5,
+            "result": "Tests: 452, Assertions: 1654, Errors: 4, PHPUnit Warnings: 2, Skipped: 22."
+        }
+    },
+    {
+        "package": "symfony/var-dumper",
+        "runtime_sites": 7,
+        "runtime_pairs": 3,
+        "covered": 3,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 10,
+        "static_capabilities": [
+            "ENV",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NATIVE",
+            "NETWORK",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 0,
+            "result": "S...............Fatal error: Premature end of PHP process when running Symfony\\Component\\VarDumper\\Tests\\Caster\\CasterTest::testTypeErrorInDebugInfo."
+        }
+    },
+    {
+        "package": "symfony/http-foundation",
+        "runtime_sites": 17,
+        "runtime_pairs": 10,
+        "covered": 10,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 12,
+        "static_capabilities": [
+            "FILE_READ",
+            "FILE_WRITE",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 34,
+            "result": "Tests: 1919, Assertions: 3386, Errors: 1, PHPUnit Warnings: 2, Skipped: 166."
+        }
+    },
+    {
+        "package": "symfony/cache",
+        "runtime_sites": 38,
+        "runtime_pairs": 10,
+        "covered": 10,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 16,
+        "static_capabilities": [
+            "DYNAMIC_INCLUDE",
+            "FILE_READ",
+            "FILE_WRITE",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 124,
+            "seconds": 900,
+            "result": "timeout"
+        }
+    },
+    {
+        "package": "symfony/console",
+        "runtime_sites": 43,
+        "runtime_pairs": 15,
+        "covered": 15,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 28,
+        "static_capabilities": [
+            "ENV",
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 81,
+            "result": "Tests: 1843, Assertions: 3439, Errors: 23, Failures: 5, PHPUnit Warnings: 4, Skipped: 24."
+        }
+    },
+    {
+        "package": "vlucas/phpdotenv",
+        "runtime_sites": 4,
+        "runtime_pairs": 2,
+        "covered": 2,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 4,
+        "static_capabilities": [
+            "ENV",
+            "FILE_READ"
+        ],
+        "suite": {
+            "exit": 0,
+            "seconds": 4,
+            "result": "OK (280 tests, 580 assertions)"
+        }
+    },
+    {
+        "package": "monolog/monolog",
+        "runtime_sites": 12,
+        "runtime_pairs": 10,
+        "covered": 9,
+        "caller_provided": [
+            "NETWORK: fopen() at src/Monolog/Handler/StreamHandler.php:158 arg 'ftp://foo/bar/baz/3102'"
+        ],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 23,
+        "static_capabilities": [
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 36,
+            "result": "Tests: 1304, Assertions: 2364, Errors: 12, Failures: 6, Warnings: 1, Deprecations: 11, PHPUnit Deprecations: 239, Skipped: 46."
+        }
+    },
+    {
+        "package": "guzzlehttp/psr7",
+        "runtime_sites": 5,
+        "runtime_pairs": 5,
+        "covered": 5,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 6,
+        "static_capabilities": [
+            "FILE_READ",
+            "FILE_WRITE"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 7,
+            "result": "Tests: 3038, Assertions: 6946, Errors: 4, Skipped: 1, Incomplete: 1."
+        }
+    },
+    {
+        "package": "ramsey/uuid",
+        "runtime_sites": 3,
+        "runtime_pairs": 3,
+        "covered": 3,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 5,
+        "static_capabilities": [
+            "EXEC",
+            "FILE_READ",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 0,
+            "seconds": 322,
+            "result": "Tests: 2022, Assertions: 88398, Skipped: 7."
+        }
+    },
+    {
+        "package": "league/csv",
+        "runtime_sites": 29,
+        "runtime_pairs": 15,
+        "covered": 14,
+        "caller_provided": [
+            "NETWORK: fopen() at src/Stream.php:138 arg 'https://raw.githubusercontent.com/thephpleague/csv/8.2.3/test/data/foo.csv'"
+        ],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 21,
+        "static_capabilities": [
+            "DYNAMIC_INCLUDE",
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 3,
+            "result": "Tests: 700, Assertions: 1223, Errors: 1, Failures: 2, Deprecations: 17."
+        }
+    },
+    {
+        "package": "phpmailer/phpmailer",
+        "runtime_sites": 9,
+        "runtime_pairs": 3,
+        "covered": 3,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 24,
+        "static_capabilities": [
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 1,
+            "result": "Tests: 729, Assertions: 1319, Errors: 70, Skipped: 20."
+        }
+    },
+    {
+        "package": "sebastian/environment",
+        "runtime_sites": 5,
+        "runtime_pairs": 3,
+        "covered": 3,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 15,
+        "static_capabilities": [
+            "CODE_EVAL",
+            "DYNAMIC_INCLUDE",
+            "ENV",
+            "EXEC",
+            "FILE_READ",
+            "FILE_WRITE",
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 1,
+            "seconds": 1,
+            "result": "Tests: 29, Assertions: 31, PHPUnit Warnings: 1, PHPUnit Deprecations: 3, Skipped: 7."
+        }
+    },
+    {
+        "package": "egulias/email-validator",
+        "runtime_sites": 1,
+        "runtime_pairs": 1,
+        "covered": 1,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 1,
+        "static_capabilities": [
+            "NETWORK"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 2,
+            "result": "Tests: 358, Assertions: 471, Errors: 5, Failures: 13, Skipped: 2, Incomplete: 2."
+        }
+    },
+    {
+        "package": "twig/twig",
+        "runtime_sites": 14,
+        "runtime_pairs": 7,
+        "covered": 6,
+        "caller_provided": [],
+        "inside_eval": [
+            "FILE_READ: opendir() in code eval'd at src/Test/IntegrationTestCase.php:345, reported as CODE_EVAL"
+        ],
+        "misses": [],
+        "static_pairs": 13,
+        "static_capabilities": [
+            "CODE_EVAL",
+            "DYNAMIC_INCLUDE",
+            "FILE_READ",
+            "FILE_WRITE",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 2,
+            "seconds": 188,
+            "result": "Tests: 2790, Assertions: 6787, Errors: 1, PHPUnit Warnings: 3, Deprecations: 2, PHPUnit Deprecations: 1, PHPUnit Notices: 3, Skipped: 6, Risky: 13."
+        }
+    },
+    {
+        "package": "league/commonmark",
+        "runtime_sites": 2,
+        "runtime_pairs": 2,
+        "covered": 1,
+        "caller_provided": [
+            "FILE_WRITE: link() at src/Extension/DefaultAttributes/ApplyDefaultAttributesProcessor.php:137 arg class League\\CommonMark\\Extension\\CommonMark\\Node\\Inline\\Link { ... }"
+        ],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 1,
+        "static_capabilities": [
+            "FILE_READ"
+        ],
+        "suite": {
+            "exit": 0,
+            "seconds": 146,
+            "result": "Tests: 4407, Assertions: 5556, Deprecations: 6, PHPUnit Deprecations: 1, PHPUnit Notices: 96, Skipped: 6."
+        }
+    },
+    {
+        "package": "laravel/serializable-closure",
+        "runtime_sites": 2,
+        "runtime_pairs": 2,
+        "covered": 2,
+        "caller_provided": [],
+        "inside_eval": [],
+        "misses": [],
+        "static_pairs": 4,
+        "static_capabilities": [
+            "DYNAMIC_INCLUDE",
+            "DYNAMIC_UNRESOLVED",
+            "FILE_READ",
+            "UNSERIALIZE"
+        ],
+        "suite": {
+            "exit": 0,
+            "seconds": 22,
+            "result": "Tests: 419, Assertions: 964, Skipped: 1."
+        }
+    }
+]

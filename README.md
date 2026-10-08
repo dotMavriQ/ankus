@@ -407,9 +407,22 @@ Samples are downloaded by commit hash and only parsed, never executed. CI runs
 the corpus on every push.
 
 **Runtime comparison** (`oracle/`). Runs the test suites of 20 widely used
-packages under an Xdebug function trace, in a sandbox without network access,
-and checks that every capability the package's own code used at runtime was
-also reported by ankus. Results are in `oracle/results.json`.
+packages (Symfony components, monolog, guzzlehttp/psr7, phpdotenv, ramsey/uuid,
+phpmailer, twig, league/commonmark, league/csv and others) under an Xdebug
+function trace, in a sandbox without network access, and checks that every
+capability the package's own code used at runtime was also reported by ankus.
+
+| Capabilities used at runtime, counted as (file, capability) pairs | 116 |
+|---|---|
+| reported by ankus | 110 |
+| passed in by the caller (a callback or a URL given as a file path) | 5 |
+| inside code created with `eval()`, where ankus reported `CODE_EVAL` | 1 |
+| **missed** | **0** |
+
+This shows ankus is sound on the code these test suites run, not on every
+path. Two suites ran only partly: symfony/cache stopped at the 15-minute
+limit and symfony/var-dumper crashed early. Per-package results are in
+`oracle/results.json`.
 
 ## License
 
