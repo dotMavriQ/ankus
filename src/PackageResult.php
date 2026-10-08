@@ -17,6 +17,9 @@ final class PackageResult
     /** Dynamic calls through caller-provided callables; informational only. */
     public int $callbacks = 0;
 
+    /** @var array<string, array<int, true>> file => lines of those calls */
+    public array $callbackSites = [];
+
     public function __construct(
         public readonly string $name,
         public readonly string $version,
@@ -35,6 +38,24 @@ final class PackageResult
         }
         $this->seen[$key] = true;
         $this->findings[$finding->capability->value][] = $finding;
+    }
+
+    /** @var array<string, array<int, true>> file => lines where a path/URL argument comes from the caller */
+    public array $callerPathSites = [];
+
+    /** A file function whose path the caller chose; passing it a URL is the caller's decision. */
+    public function callerPath(string $file, int $line): void
+    {
+        $this->callerPathSites[$file][$line] = true;
+    }
+
+    /** A call through a callable the caller supplied: the caller's capability, not ours. */
+    public function callback(string $file, int $line): void
+    {
+        if (!isset($this->callbackSites[$file][$line])) {
+            $this->callbacks++;
+        }
+        $this->callbackSites[$file][$line] = true;
     }
 
     public function addTrigger(string $trigger, string $detail): void

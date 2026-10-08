@@ -119,7 +119,7 @@ capabilities it must produce. Extra capabilities fail just like missing ones.
 - the "update turns into a plugin and exfiltrates a token" scenario, end to end
 
 **Real-world precision**: a fresh Laravel 13 application (109 packages, 8,092
-files, ~21 s, 250 MB):
+files):
 
 - 60 of 109 packages have no capabilities at all.
 - Every `EXEC`, `CODE_EVAL` and `NATIVE` finding was checked by hand and is
@@ -131,6 +131,29 @@ files, ~21 s, 250 MB):
 - Following calls with bound arguments added no new capabilities on Laravel.
 
 Every false positive found on real code became a regression fixture.
+
+## Speed
+
+Same Laravel 13 app, 12-core laptop, steady-state runs:
+
+| | Time |
+|---|---|
+| first scan, no cache | 4.6 s |
+| `ankus check`, nothing changed | 0.3 s |
+| `ankus check` after one package changed | 0.45 s |
+
+How:
+
+- **Content-addressed cache** (`~/.cache/ankus`). Results are keyed by a hash
+  of every analyzed file's bytes, the package's install-time metadata and
+  ankus's own code, never by version string: a file edited in `vendor/` after
+  install is re-analyzed even if the version didn't change.
+- **Parallel workers** (`--jobs=N`, default CPU count), largest packages first.
+- **Relaunch without Xdebug and with the opcache JIT**, like Composer does with
+  Xdebug. On a machine with Xdebug in `develop` mode the same scan took 77 s.
+  `ANKUS_NO_RELAUNCH=1` opts out.
+
+Sequential, parallel and cached runs produce byte-identical output.
 
 ## Limits
 
@@ -154,7 +177,7 @@ Every false positive found on real code became a regression fixture.
   hand-labelled, to measure alerts per update.
 - **Sandboxed install**: run `composer install` with plugins confined by
   Landlock, so install-time code can't reach the network or your home dir.
-- PHAR build, result cache by file hash, SARIF output for code scanning.
+- PHAR build, SARIF output for code scanning.
 
 ## Requirements
 

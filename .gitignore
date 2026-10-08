@@ -2,3 +2,4 @@
 /.phpunit.cache/
 /corpus/samples/
 /.phpunit.result.cache
+/oracle/work/

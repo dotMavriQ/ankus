@@ -359,7 +359,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
     {
         if ($v->pair) {
             if ($v->tainted) {
-                $this->result->callbacks++;
+                $this->result->callback($this->relFile, $node->getStartLine());
             }
             return;
         }
@@ -398,7 +398,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
                 $this->add(C::Obfuscation, $via, $node, 'call target passes through a decoder');
             }
         } elseif ($v->external) {
-            $this->result->callbacks++;
+            $this->result->callback($this->relFile, $node->getStartLine());
         }
     }
 
@@ -437,6 +437,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
                     break;
                 }
             }
+        }
+        if (!$isUrl && !$v->tainted && $v->isUnknown()) {
+            $this->result->callerPath($this->relFile, $node->getStartLine());
         }
         if ($v->tainted && !$isUrl && $mayBeFile) {
             $this->add(C::Network, $fn . '()', $node, 'path built from unresolvable input; may be a URL');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ankus;
 
 use Ankus\Analysis\PackageAnalyzer;
+use Ankus\Cache\ResultCache;
 use Ankus\Lock\Change;
 use Ankus\Lock\Lockfile;
 
@@ -25,6 +26,10 @@ final class Cli
       ankus check [--vendor=DIR] [--lock=FILE] [--json]       Fail if a package gained capabilities
       ankus diff  OLD_DIR NEW_DIR [--json]                    Compare two versions of one package
 
+    Options:
+      --jobs=N      worker processes (default: CPU count)
+      --no-cache    don't read or write ~/.cache/ankus
+
     Defaults: --vendor=vendor  --lock=howdah.lock
     Exit codes: 0 ok, 1 new capabilities found, 2 error
 
@@ -42,6 +47,9 @@ final class Cli
     public function run(array $argv): int
     {
         [$command, $positional, $opts] = self::parse(array_slice($argv, 1));
+        if ($command === null && isset($opts['version'])) {
+            $command = 'version';
+        }
         try {
             return match ($command) {
                 'scan' => $this->scan($opts),
@@ -206,12 +214,10 @@ final class Cli
         if (isset($opts['path'])) {
             return [$this->analyzeDir(self::opt($opts, 'path', '.'))];
         }
-        $results = [];
-        foreach (Vendor::packages(self::opt($opts, 'vendor', 'vendor')) as $p) {
-            $results[] = $this->analyzer->analyze($p['name'], $p['version'], $p['path'], $p['meta']);
-        }
+        $jobs = isset($opts['jobs']) ? max(1, (int) $opts['jobs']) : Scanner::cpuCount();
+        $cache = isset($opts['no-cache']) ? ResultCache::disabled() : ResultCache::default();
 
-        return $results;
+        return (new Scanner($this->analyzer, $cache, $jobs))->scan(Vendor::packages(self::opt($opts, 'vendor', 'vendor')));
     }
 
     private function analyzeDir(string $dir): PackageResult

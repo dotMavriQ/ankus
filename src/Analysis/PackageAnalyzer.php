@@ -26,8 +26,9 @@ final class PackageAnalyzer
 
     /**
      * @param array<string, mixed> $meta Composer package metadata (type, autoload, extra)
+     * @param list<string> $skip directories relative to $dir to leave out (e.g. a source checkout's own vendor/)
      */
-    public function analyze(string $name, string $version, string $dir, array $meta = []): PackageResult
+    public function analyze(string $name, string $version, string $dir, array $meta = [], array $skip = []): PackageResult
     {
         $result = new PackageResult($name, $version, $dir);
         $this->triggers($result, $meta);
@@ -35,7 +36,7 @@ final class PackageAnalyzer
         // Files are parsed twice rather than held in memory: a large
         // framework package would otherwise need gigabytes of ASTs.
         $files = [];
-        foreach (self::phpFiles($dir) as $abs) {
+        foreach (self::phpFiles($dir, $skip) as $abs) {
             $rel = substr($abs, strlen(rtrim($dir, '/')) + 1);
             $result->files++;
             $size = @filesize($abs);
@@ -104,16 +105,22 @@ final class PackageAnalyzer
         }
     }
 
-    /** @return \Generator<string> */
-    public static function phpFiles(string $dir): \Generator
+    /**
+     * @param list<string> $skip directories relative to $dir to leave out
+     * @return \Generator<string>
+     */
+    public static function phpFiles(string $dir, array $skip = []): \Generator
     {
         if (!is_dir($dir)) {
             return;
         }
+        $root = rtrim($dir, '/') . '/';
+        $skip = array_map(static fn (string $d) => $root . trim($d, '/'), $skip);
         $it = new \RecursiveIteratorIterator(
             new \RecursiveCallbackFilterIterator(
                 new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-                static fn (\SplFileInfo $f) => !($f->isDir() && in_array($f->getFilename(), ['.git', '.hg', '.svn', 'node_modules'], true)),
+                static fn (\SplFileInfo $f) => !($f->isDir() && (in_array($f->getFilename(), ['.git', '.hg', '.svn', 'node_modules'], true)
+                    || in_array($f->getPathname(), $skip, true))),
             ),
         );
         $files = [];
