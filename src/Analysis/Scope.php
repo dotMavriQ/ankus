@@ -17,6 +17,9 @@ final class Scope
     public int $branchDepth = 0;
     public int $loopDepth = 0;
 
+    /** @var array<string, array{\PhpParser\Node\Expr\Closure|\PhpParser\Node\Expr\ArrowFunction, Scope}> closures assigned to variables, with their defining scope */
+    public array $closures = [];
+
     public function __construct(
         public readonly ?string $class,
         public readonly string $context,
@@ -28,6 +31,11 @@ final class Scope
         return $this->vars[$name] ?? Value::external();
     }
 
+    public function bind(string $name, Value $value): void
+    {
+        $this->vars[$name] = $value;
+    }
+
     public function has(string $name): bool
     {
         return isset($this->vars[$name]);
@@ -35,6 +43,7 @@ final class Scope
 
     public function assign(string $name, Value $value): void
     {
+        unset($this->closures[$name]);
         if ($this->branchDepth > 0 && isset($this->vars[$name])) {
             $value = $this->vars[$name]->union($value);
         }
@@ -46,10 +55,14 @@ final class Scope
         $child = new self($class, $context);
         if ($inherit) {
             $child->vars = $this->vars;
+            $child->closures = $this->closures;
         }
         foreach ($captured as $name) {
             if (isset($this->vars[$name])) {
                 $child->vars[$name] = $this->vars[$name];
+            }
+            if (isset($this->closures[$name])) {
+                $child->closures[$name] = $this->closures[$name];
             }
         }
 

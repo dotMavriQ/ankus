@@ -38,6 +38,13 @@ final class PackageIndex extends NodeVisitorAbstract
     /** @var array<string, string> class => parent class (lowercase FQN) */
     public array $parents = [];
 
+    /** @var array<string, array{Stmt\Function_, string, string}> function FQN => [node, abs file, rel file] */
+    public array $functionNodes = [];
+
+    /** Set by the analyzer before each file is traversed. */
+    public string $absFile = '';
+    public string $relFile = '';
+
     /** @var list<?string> */
     private array $classStack = [];
 
@@ -55,6 +62,7 @@ final class PackageIndex extends NodeVisitorAbstract
         } elseif ($node instanceof Stmt\Function_) {
             $fqn = strtolower($node->namespacedName?->toString() ?? $node->name->toString());
             $this->functions[$fqn] = true;
+            $this->functionNodes[$fqn] = [$node, $this->absFile, $this->relFile];
             $this->functionStack[] = ['function', $fqn];
         } elseif ($node instanceof Stmt\ClassMethod) {
             $this->functionStack[] = ['method', strtolower($node->name->toString())];

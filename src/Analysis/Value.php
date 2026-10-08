@@ -95,6 +95,11 @@ final readonly class Value
         return new self($this->strings, $this->tainted, $this->external, $this->obfuscated || $obfuscated, $this->partial, $this->prefixes, $this->fragments, $this->pair);
     }
 
+    public function withoutObfuscation(): self
+    {
+        return new self($this->strings, $this->tainted, $this->external, false, $this->partial, $this->prefixes, $this->fragments, $this->pair);
+    }
+
     public function withTaint(): self
     {
         return new self($this->strings, true, $this->external, $this->obfuscated, $this->partial, $this->prefixes, $this->fragments, $this->pair);

@@ -24,8 +24,16 @@ final class PackageResult
     ) {
     }
 
+    /** @var array<string, true> */
+    private array $seen = [];
+
     public function add(Finding $finding): void
     {
+        $key = implode("\0", [$finding->capability->value, $finding->file, $finding->line, $finding->sink, $finding->note]);
+        if (isset($this->seen[$key])) {
+            return;
+        }
+        $this->seen[$key] = true;
         $this->findings[$finding->capability->value][] = $finding;
     }
 

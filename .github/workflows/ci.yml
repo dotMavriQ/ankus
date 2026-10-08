@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: zip, zlib
+          coverage: none
+      - run: composer install --no-interaction --no-progress --no-plugins --no-scripts
+      - run: vendor/bin/phpunit
+
+  corpus:
+    # Release gate: every recoverable real attack must still be caught.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: zip, zlib
+          coverage: none
+      - run: composer install --no-interaction --no-progress --no-plugins --no-scripts
+      - run: php corpus/run.php
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

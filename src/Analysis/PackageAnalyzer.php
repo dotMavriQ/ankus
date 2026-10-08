@@ -58,6 +58,8 @@ final class PackageAnalyzer
                 unset($files[$abs]);
                 continue;
             }
+            $index->absFile = $abs;
+            $index->relFile = $rel;
             $collect->traverse($ast);
         }
 

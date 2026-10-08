@@ -83,19 +83,43 @@ rather than dropped.
 
 Claims about security tools should come with numbers. Current state:
 
-**Fixtures** (`tests/fixtures`): 92 files, each declaring the *exact* set of
+**Real attacks** (`corpus/`): every Packagist supply-chain attack of 2026 whose
+malicious commits are still recoverable, replayed as the update a victim would
+have pulled (clean parent commit -> malicious commit). Expected capabilities
+are written from the public write-ups, not from ankus output.
+
+| Attack | `ankus check` | Gained |
+|---|---|---|
+| intercom/intercom-php 5.0.2, Mini Shai-Hulud (Apr 2026), 2 commits | fails | `composer-plugin` trigger, `EXEC` (`passthru` of the Bun dropper in `onPostInstallOrUpdate()`) |
+| laravel-lang/lang tag rewrite (May 2026) | fails | `autoload-files` trigger, `NETWORK` to `https://flipboxstudio.info/payload` (decoded from `array_map('chr', ...)`), `EXEC`, `FILE_WRITE`, `OBFUSCATION` |
+| laravel-lang/http-statuses tag rewrite (May 2026), 2 commits | fails | same as above |
+| bfunky/http-parser re-tag (May 2026) | fails | `NETWORK` to the base64-hidden `https://44.210.94.38/packagist.php`, `ENV` (full `getenv()` dump), `FILE_WRITE`, `OBFUSCATION` |
+
+**6/6 caught with every expected capability.** `php corpus/run.php` reproduces
+this; samples are downloaded by commit SHA and only ever parsed.
+
+The corpus earned its keep on the first run: 6/6 were already flagged, but 4
+were missing `OBFUSCATION`, and reading the Laravel-Lang dropper showed a
+deeper gap. Its URL reached `file_get_contents()` only through a closure
+parameter, so ankus had reported `NETWORK` only because the same closure also
+called `curl_init()`. ankus now follows calls into closures, package functions
+and same-class methods with the caller's arguments bound whenever an argument
+is worth following (a URL, a sink name, a credential path, anything encoded).
+
+**Fixtures** (`tests/fixtures`): 99 files, each declaring the *exact* set of
 capabilities it must produce. Extra capabilities fail just like missing ones.
 
-- 59 evasion techniques, all caught (string folding, decoders, loops, branch
-  unions, constants, method returns, callables, include tricks, FFI, ...)
-- 23 benign patterns that must stay quiet (`$pdo->exec()`, namespaced
+- 65 evasion techniques, all caught (string folding, decoders, `chr` arrays,
+  loops, branch unions, constants, method returns, callables, values passed
+  through closure and function parameters, include tricks, FFI, ...)
+- 24 benign patterns that must stay quiet (`$pdo->exec()`, namespaced
   `exec()`, `use function`, callbacks in params and properties, first-class
   method callables, `[$this, $method]`, framework-style `new $class`, ...)
 - 10 plain sinks, so ordinary capabilities are reported correctly
 - the "update turns into a plugin and exfiltrates a token" scenario, end to end
 
 **Real-world precision**: a fresh Laravel 13 application (109 packages, 8,092
-files, ~20 s, 250 MB):
+files, ~21 s, 250 MB):
 
 - 60 of 109 packages have no capabilities at all.
 - Every `EXEC`, `CODE_EVAL` and `NATIVE` finding was checked by hand and is
@@ -104,6 +128,7 @@ files, ~20 s, 250 MB):
   first run. At least 7 are calls the code genuinely builds or loads at runtime:
   `require Env::get(...)` returning a callable, a closure obtained by `include`
   through a custom stream wrapper, `"is_$mode"()`, `'image' . $name`.
+- Following calls with bound arguments added no new capabilities on Laravel.
 
 Every false positive found on real code became a regression fixture.
 
@@ -120,8 +145,9 @@ Every false positive found on real code became a regression fixture.
 
 ## Roadmap
 
-- **Malware corpus**: every confirmed malicious Packagist release we can
-  archive, with 100% detection as a release gate.
+- **More corpus**: older attacks (hautelook/phpass 2022, nhattuanbl's Laravel
+  RAT packages 2024) where the malicious code has to be recovered from
+  archives rather than GitHub.
 - **Dynamic oracle**: run package test suites under an instrumented PHP and
   require every capability observed at runtime to be predicted statically.
 - **Historical replay**: a year of real `composer update`s on popular apps,

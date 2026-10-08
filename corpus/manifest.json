@@ -1,0 +1,74 @@
+{
+    "_readme": "Real supply-chain attacks on Packagist, as before/after commit pairs. Expectations are written from the public write-ups, not from ankus output. Samples are downloaded by run.php into samples/ (git-ignored) and are only ever parsed, never executed.",
+    "attacks": [
+        {
+            "id": "intercom-php-5.0.2",
+            "title": "Mini Shai-Hulud: intercom/intercom-php overwritten into a Composer plugin",
+            "date": "2026-04-30",
+            "repo": "intercom/intercom-php",
+            "clean": "9371eba90169cd825fe7502a8837d2d3e7a03faf",
+            "malicious": "e8a812c5ea7d8c7ed642b0d82754ced6a99025b0",
+            "expect": { "triggers": ["composer-plugin"], "capabilities": ["EXEC"] },
+            "basis": "composer.json changed to type composer-plugin; plugin runs setup-intercom.sh on post-install/post-update, which downloads Bun and runs the stealer.",
+            "refs": [
+                "https://socket.dev/blog/mini-shai-hulud-packagist-malicious-intercom-php-package-compromise",
+                "https://semgrep.dev/blog/2026/malicious-intercom-php-package-spreads-mini-shai-hulud-attack-to-packagist-via-composer-plugin/"
+            ]
+        },
+        {
+            "id": "intercom-php-5.0.2-b",
+            "title": "Mini Shai-Hulud: second overwritten intercom/intercom-php commit",
+            "date": "2026-04-30",
+            "repo": "intercom/intercom-php",
+            "clean": "9371eba90169cd825fe7502a8837d2d3e7a03faf",
+            "malicious": "e69bf4b3e84e7951a7b4ded8fee8822c57630cf8",
+            "expect": { "triggers": ["composer-plugin"], "capabilities": ["EXEC"] },
+            "basis": "Same payload as intercom-php-5.0.2, pushed two minutes later.",
+            "refs": ["https://socket.dev/blog/mini-shai-hulud-packagist-malicious-intercom-php-package-compromise"]
+        },
+        {
+            "id": "laravel-lang-lang",
+            "title": "Laravel-Lang tag rewrite: laravel-lang/lang",
+            "date": "2026-05-22",
+            "repo": "Laravel-Lang/lang",
+            "clean": "477f7e950a24eaf072aacf90a59e70250a96aa91",
+            "malicious": "a5ea2e8fa92ccf29cdb1d2dadbeb27722b2bff37",
+            "expect": { "triggers": [], "capabilities": ["NETWORK", "EXEC", "FILE_WRITE", "OBFUSCATION"] },
+            "basis": "src/helpers.php added to autoload.files; builds the C2 host from character codes, fetches a second stage over TLS with verification off, writes it to the temp dir and runs it detached.",
+            "refs": ["https://www.aikido.dev/blog/supply-chain-attack-targets-laravel-lang-packages-with-credential-stealer"]
+        },
+        {
+            "id": "laravel-lang-http-statuses-a",
+            "title": "Laravel-Lang tag rewrite: laravel-lang/http-statuses",
+            "date": "2026-05-22",
+            "repo": "Laravel-Lang/http-statuses",
+            "clean": "4f1cfeb3df179bdcd1c40bb57cc5c7f2a11278b4",
+            "malicious": "26c233e1a0d4fd2331e8e0f175e18f8eed904aa3",
+            "expect": { "triggers": [], "capabilities": ["NETWORK", "EXEC", "FILE_WRITE", "OBFUSCATION"] },
+            "basis": "Same dropper as laravel-lang-lang.",
+            "refs": ["https://www.aikido.dev/blog/supply-chain-attack-targets-laravel-lang-packages-with-credential-stealer"]
+        },
+        {
+            "id": "laravel-lang-http-statuses-b",
+            "title": "Laravel-Lang tag rewrite: laravel-lang/http-statuses (second commit)",
+            "date": "2026-05-22",
+            "repo": "Laravel-Lang/http-statuses",
+            "clean": "4f1cfeb3df179bdcd1c40bb57cc5c7f2a11278b4",
+            "malicious": "bba2e443dc7ff1f8704f52a5375383e3f4f643b8",
+            "expect": { "triggers": [], "capabilities": ["NETWORK", "EXEC", "FILE_WRITE", "OBFUSCATION"] },
+            "basis": "Same dropper as laravel-lang-lang.",
+            "refs": ["https://www.aikido.dev/blog/supply-chain-attack-targets-laravel-lang-packages-with-credential-stealer"]
+        },
+        {
+            "id": "bfunky-http-parser",
+            "title": "bfunky/http-parser re-tagged with an environment beacon",
+            "date": "2026-05-08",
+            "repo": "bfunky/http-parser",
+            "clean": "0cdd2eaed18a1168a523472e6dc862c6708c9a32",
+            "malicious": "d1c67b2a59301c753e69eabee2ef1c265b111936",
+            "expect": { "triggers": [], "capabilities": ["NETWORK", "ENV", "FILE_WRITE", "OBFUSCATION"] },
+            "basis": "src/Analytics.php POSTs hostname, uname and the full getenv() dump to a base64-hidden URL with TLS verification off, then writes a marker file in the temp dir.",
+            "refs": ["https://github.com/tstromberg/supplychain-attack-data/tree/main/oss/attacks/bfunky-http-parser"]
+        }
+    ]
+}

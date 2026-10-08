@@ -166,6 +166,15 @@ final class Evaluator
         if (in_array($name, ['implode', 'join'], true)) {
             return $this->implode($e, $scope);
         }
+        if ($name === 'array_map') {
+            $fn = isset($e->args[0]) && $e->args[0] instanceof Node\Arg ? $this->eval($e->args[0]->value, $scope) : Value::none();
+            foreach ($fn->strings as $f) {
+                if (in_array(strtolower($f), Sinks::DECODERS, true)) {
+                    // Mapping a decoder over data: whatever comes out was disguised.
+                    return Value::tainted(true);
+                }
+            }
+        }
 
         $args = [];
         foreach ($e->args as $arg) {
@@ -292,6 +301,7 @@ final class Evaluator
             $glue = $this->eval($g, $scope);
             $pieces = $p;
         }
+        $pieces = $this->literalList($pieces, $scope) ?? $pieces;
         if (!$pieces instanceof Expr\Array_ || !$glue->isConcrete() || count($glue->strings) !== 1) {
             if ($pieces === null) {
                 return Value::tainted();
@@ -318,6 +328,43 @@ final class Evaluator
         }
 
         return $result;
+    }
+
+    /**
+     * Rewrite array_map('chr', [104, 116, ...]) and array_reverse([...]) on
+     * literal arrays into a literal array of results, so implode() can join
+     * them in order.
+     */
+    private function literalList(?Node $e, Scope $scope): ?Expr\Array_
+    {
+        if (!$e instanceof Expr\FuncCall || !$e->name instanceof Node\Name) {
+            return null;
+        }
+        $name = strtolower($e->name->toString());
+        $args = $e->getRawArgs();
+        if ($name === 'array_reverse' && isset($args[0]) && $args[0] instanceof Node\Arg) {
+            $inner = $args[0]->value instanceof Expr\Array_ ? $args[0]->value : $this->literalList($args[0]->value, $scope);
+
+            return $inner === null ? null : new Expr\Array_(array_reverse($inner->items));
+        }
+        if ($name !== 'array_map' || count($args) !== 2 || !$args[0] instanceof Node\Arg || !$args[1] instanceof Node\Arg) {
+            return null;
+        }
+        $fn = $this->eval($args[0]->value, $scope);
+        $list = $args[1]->value instanceof Expr\Array_ ? $args[1]->value : $this->literalList($args[1]->value, $scope);
+        if (!$fn->isConcrete() || count($fn->strings) !== 1 || $list === null
+            || !in_array(strtolower($fn->strings[0]), Sinks::FOLDABLE, true)) {
+            return null;
+        }
+        $items = [];
+        foreach ($list->items as $item) {
+            if ($item === null) {
+                return null;
+            }
+            $items[] = new Node\ArrayItem(new Expr\FuncCall(new Node\Name($fn->strings[0]), [new Node\Arg($item->value)]));
+        }
+
+        return new Expr\Array_($items);
     }
 
     private function methodCall(Expr\MethodCall|Expr\NullsafeMethodCall $e, Scope $scope): Value

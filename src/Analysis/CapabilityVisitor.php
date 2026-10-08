@@ -10,6 +10,8 @@ use Ankus\PackageResult;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
+use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 
 /**
@@ -29,20 +31,50 @@ final class CapabilityVisitor extends NodeVisitorAbstract
 
     private Evaluator $eval;
 
+    /** @var array<string, array{Stmt\ClassMethod, string, string}> "class::method" => [node, class, display name] in this file */
+    private array $methods = [];
+
+    /** How deep calls may be followed with bound arguments. */
+    private const MAX_REPLAY_DEPTH = 2;
+
+    /**
+     * @param list<int> $replayStack object ids of functions being replayed, to stop recursion
+     * @param array<string, array{Stmt\ClassMethod, string, string}> $methods
+     */
     public function __construct(
         private readonly PackageIndex $index,
         private readonly PackageResult $result,
         private readonly string $absFile,
         private readonly string $relFile,
+        private readonly ?Scope $initialScope = null,
+        private readonly ?string $initialClass = null,
+        private readonly string $initialClassName = '',
+        private readonly int $replayDepth = 0,
+        private readonly array $replayStack = [],
+        array $methods = [],
     ) {
         $this->eval = new Evaluator($index, $absFile);
+        $this->methods = $methods;
     }
 
     public function beforeTraverse(array $nodes): null
     {
-        $this->scopes = [new Scope(null, '<top-level>')];
-        $this->classes = [];
-        $this->classNames = [];
+        $this->scopes = [$this->initialScope ?? new Scope(null, '<top-level>')];
+        $this->classes = $this->initialClass !== null ? [$this->initialClass] : [];
+        $this->classNames = $this->initialClass !== null ? [$this->initialClassName] : [];
+        if ($this->replayDepth === 0) {
+            $this->methods = [];
+            foreach ((new NodeFinder())->findInstanceOf($nodes, Stmt\ClassLike::class) as $class) {
+                $lower = PackageIndex::className($class);
+                if ($lower === null) {
+                    continue;
+                }
+                $display = $class->namespacedName?->toString() ?? (string) $class->name;
+                foreach ($class->getMethods() as $method) {
+                    $this->methods[$lower . '::' . strtolower($method->name->toString())] = [$method, $lower, $display];
+                }
+            }
+        }
 
         return null;
     }
@@ -173,6 +205,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             $value = $value->withTaint();
         }
         $scope->assign($name, $value);
+        if ($node->expr instanceof Expr\Closure || $node->expr instanceof Expr\ArrowFunction) {
+            $scope->closures[$name] = [$node->expr, $scope];
+        }
     }
 
     private function concatAssign(Expr\AssignOp\Concat $node, Scope $scope): void
@@ -231,11 +266,23 @@ final class CapabilityVisitor extends NodeVisitorAbstract
     private function funcCall(Expr\FuncCall $node, Scope $scope): void
     {
         if (!$node->name instanceof Node\Name) {
+            if ($node->name instanceof Expr\Variable && is_string($node->name->name) && isset($scope->closures[$node->name->name])) {
+                [$closure, $defining] = $scope->closures[$node->name->name];
+                $this->replay($closure, $node, $scope, $this->absFile, $this->relFile, $this->currentClass(), (string) end($this->classNames), $defining);
+
+                return;
+            }
             $this->callable($this->eval->eval($node->name, $scope), $node, $scope, 'dynamic call');
 
             return;
         }
-        if ($this->eval->declaredFunction($node->name) !== null) {
+        $declared = $this->eval->declaredFunction($node->name);
+        if ($declared !== null) {
+            if (isset($this->index->functionNodes[$declared])) {
+                [$fn, $abs, $rel] = $this->index->functionNodes[$declared];
+                $this->replay($fn, $node, $scope, $abs, $rel, null, '', null);
+            }
+
             return;
         }
         $name = $node->name->toString();
@@ -272,6 +319,21 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             $arg = $args[Sinks::URL_ARG_FUNCTIONS[$name]] ?? null;
             if ($arg !== null) {
                 $this->urlArgument($this->eval->eval($arg->value, $scope), $name, $node);
+            }
+        }
+        if ($name === 'curl_init' && isset($args[0])) {
+            $url = $this->eval->eval($args[0]->value, $scope);
+            // Its first argument is already checked as an encoded literal above.
+            $this->urlArgument($url->isConcrete() ? $url->withoutObfuscation() : $url, $name, $node, false);
+        }
+        if ($name === 'curl_setopt' && isset($args[1], $args[2]) && self::isConst($args[1]->value, 'CURLOPT_URL')) {
+            $this->urlArgument($this->eval->eval($args[2]->value, $scope), $name, $node, false);
+        }
+        if ($name === 'curl_setopt_array' && isset($args[1]) && $args[1]->value instanceof Expr\Array_) {
+            foreach ($args[1]->value->items as $item) {
+                if ($item !== null && $item->key !== null && self::isConst($item->key, 'CURLOPT_URL')) {
+                    $this->urlArgument($this->eval->eval($item->value, $scope), $name, $node, false);
+                }
             }
         }
         if ($name === 'fopen') {
@@ -358,7 +420,13 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         return true;
     }
 
-    private function urlArgument(Value $v, string $fn, Node $node): void
+    private static function isConst(Node $expr, string $name): bool
+    {
+        return $expr instanceof Expr\ConstFetch && strcasecmp(ltrim($expr->name->toString(), '\\'), $name) === 0;
+    }
+
+    /** @param bool $mayBeFile false for arguments that are always URLs (cURL), true for stream functions */
+    private function urlArgument(Value $v, string $fn, Node $node, bool $mayBeFile = true): void
     {
         $isUrl = false;
         foreach ([...$v->strings, ...$v->prefixes] as $s) {
@@ -370,10 +438,11 @@ final class CapabilityVisitor extends NodeVisitorAbstract
                 }
             }
         }
-        if ($v->tainted && !$isUrl) {
+        if ($v->tainted && !$isUrl && $mayBeFile) {
             $this->add(C::Network, $fn . '()', $node, 'path built from unresolvable input; may be a URL');
         }
-        if ($v->obfuscated) {
+        // A concrete first argument was already reported as an encoded literal.
+        if ($v->obfuscated && !($v->isConcrete() && $mayBeFile && isset(Sinks::FUNCTIONS[$fn]) && (Sinks::URL_ARG_FUNCTIONS[$fn] ?? -1) === 0)) {
             $this->add(C::Obfuscation, $fn . '()', $node, 'path or URL was encoded or constructed');
         }
         $this->sensitivePath($v, $node, $fn . '()');
@@ -445,6 +514,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
             return;
         }
         $method = strtolower($node->name->toString());
+        if (in_array($class, ['self', 'static'], true)) {
+            $this->replayMethod($this->currentClass(), $method, $node, $scope);
+        }
         foreach (Sinks::STATIC_METHODS["$class::$method"] ?? [] as $cap) {
             $this->add($cap, "$class::$method()", $node);
         }
@@ -461,6 +533,106 @@ final class CapabilityVisitor extends NodeVisitorAbstract
      */
     private function methodCall(Expr\MethodCall|Expr\NullsafeMethodCall $node, Scope $scope): void
     {
+        if ($node->var instanceof Expr\Variable && $node->var->name === 'this' && $node->name instanceof Node\Identifier) {
+            $this->replayMethod($this->currentClass(), $node->name->toString(), $node, $scope);
+        }
+    }
+
+    private function replayMethod(?string $class, string $method, Expr\CallLike $node, Scope $scope): void
+    {
+        $entry = $class !== null ? ($this->methods[$class . '::' . strtolower($method)] ?? null) : null;
+        if ($entry !== null) {
+            [$fn, $cls, $display] = $entry;
+            $this->replay($fn, $node, $scope, $this->absFile, $this->relFile, $cls, $display, null);
+        }
+    }
+
+    /**
+     * Follow a call into a function body with the caller's argument values
+     * bound to its parameters, so `$fetch('https://...')` is checked where
+     * the URL actually reaches file_get_contents(). Only done when an
+     * argument is worth following (a URL, a sink name, a credential path,
+     * or anything encoded), which keeps it cheap on ordinary code.
+     */
+    private function replay(
+        Node\FunctionLike $fn,
+        Expr\CallLike $call,
+        Scope $scope,
+        string $abs,
+        string $rel,
+        ?string $class,
+        string $className,
+        ?Scope $defining,
+    ): void {
+        if ($this->replayDepth >= self::MAX_REPLAY_DEPTH || $call->isFirstClassCallable()
+            || in_array(spl_object_id($fn), $this->replayStack, true)) {
+            return;
+        }
+        $args = [];
+        $worthIt = false;
+        foreach ($call->getArgs() as $arg) {
+            if ($arg->unpack || $arg->name !== null) {
+                break;
+            }
+            $v = $this->eval->eval($arg->value, $scope);
+            $args[] = $v;
+            $worthIt = $worthIt || self::worthFollowing($v);
+        }
+        if (!$worthIt) {
+            return;
+        }
+
+        $context = ($fn instanceof Stmt\Function_ ? ($fn->namespacedName?->toString() ?? $fn->name->toString()) . '()'
+            : ($fn instanceof Stmt\ClassMethod ? $className . '::' . $fn->name->toString() . '()' : $scope->context . ' {closure}'))
+            . ' called from line ' . $call->getStartLine();
+        if ($fn instanceof Expr\ArrowFunction) {
+            $inner = ($defining ?? $scope)->child($class, $context, true);
+        } elseif ($fn instanceof Expr\Closure) {
+            $uses = array_values(array_filter(array_map(static fn ($u) => is_string($u->var->name) ? $u->var->name : null, $fn->uses)));
+            $inner = ($defining ?? $scope)->child($class, $context, false, $uses);
+        } else {
+            $inner = new Scope($class, $context);
+        }
+        foreach ($fn->getParams() as $i => $param) {
+            if ($param->variadic || !isset($args[$i])) {
+                break;
+            }
+            if ($param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                $inner->bind($param->var->name, $args[$i]);
+            }
+        }
+
+        $visitor = new self(
+            $this->index, $this->result, $abs, $rel, $inner, $class, $className,
+            $this->replayDepth + 1, [...$this->replayStack, spl_object_id($fn)],
+            $abs === $this->absFile ? $this->methods : [],
+        );
+        (new NodeTraverser($visitor))->traverse($fn->getStmts() ?? []);
+    }
+
+    private static function worthFollowing(Value $v): bool
+    {
+        if ($v->obfuscated) {
+            return true;
+        }
+        foreach ([...$v->strings, ...$v->prefixes] as $s) {
+            $lower = strtolower(ltrim($s));
+            foreach (Sinks::NETWORK_SCHEMES as $scheme) {
+                if (str_starts_with($lower, $scheme)) {
+                    return true;
+                }
+            }
+            if (Sinks::isFunctionSink($lower)) {
+                return true;
+            }
+            foreach (Sinks::SENSITIVE_PATHS as $needle) {
+                if (stripos($s, $needle) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function evalExpr(Expr\Eval_ $node, Scope $scope): void
