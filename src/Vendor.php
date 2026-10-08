@@ -41,7 +41,11 @@ final class Vendor
         return $out;
     }
 
-    /** Metadata for a bare directory, read from its composer.json when present. */
+    /**
+     * Metadata for a bare directory, read from its composer.json when present.
+     *
+     * @return array{name: string, version: string, path: string, meta: array<string, mixed>}
+     */
     public static function directory(string $dir): array
     {
         $meta = [];

@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 permissions:
@@ -22,6 +23,37 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --no-progress --no-plugins --no-scripts
       - run: vendor/bin/phpunit
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: composer install --no-interaction --no-progress --no-plugins --no-scripts
+      - run: vendor/bin/phpstan analyse --no-progress
+
+  phar:
+    # The PHAR must behave exactly like bin/ankus.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          ini-values: phar.readonly=0
+          coverage: none
+      - run: composer install --no-dev --no-interaction --no-progress --no-plugins --no-scripts
+      - run: php build/build-phar.php ankus.phar
+      - run: ./ankus.phar --version
+      - name: PHAR and bin/ankus report the same thing
+        run: |
+          set +e
+          ./ankus.phar diff tests/packages/plugin-v1 tests/packages/plugin-v2 --json > phar.json; test $? -eq 1
+          php bin/ankus diff tests/packages/plugin-v1 tests/packages/plugin-v2 --json > bin.json; test $? -eq 1
+          cmp phar.json bin.json
 
   corpus:
     # Release gate: every recoverable real attack must still be caught.

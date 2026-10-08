@@ -119,13 +119,11 @@ final class Evaluator
     {
         $v = Value::none();
         foreach ($e->items as $item) {
-            if ($item !== null) {
-                $v = $v->union($this->eval($item->value, $scope));
-            }
+            $v = $v->union($this->eval($item->value, $scope));
         }
         // [$obj, 'method'] / [Foo::class, 'method']: a method callable, which
         // can never name a built-in function when called.
-        $items = array_values(array_filter($e->items, static fn ($i) => $i !== null));
+        $items = $e->items;
         if (count($items) === 2 && $items[0]->key === null && $items[1]->key === null
             && !$items[0]->value instanceof Node\Scalar\String_) {
             $v = $v->asPair();
@@ -273,14 +271,20 @@ final class Evaluator
             if (in_array($name, ['str_repeat', 'str_pad'], true) && ($args[1] ?? 0) > 4096) {
                 return null;
             }
-            if (in_array($name, ['sprintf'], true) && preg_match('/%[^a-z%]*\d{4,}/i', $args[0] ?? '')) {
+            if (in_array($name, ['sprintf'], true) && preg_match('/%[^a-z%]*\d{4,}/i', (string) ($args[0] ?? ''))) {
                 return null;
             }
             if (in_array($name, ['gzinflate', 'gzuncompress', 'gzdecode'], true)) {
                 $args = [$args[0] ?? '', 1 << 20];
             }
+            // Only ever the vetted pure functions, whatever the caller passes.
+            // @phpstan-ignore function.alreadyNarrowedType (gz* need ext-zlib, which may be missing)
+            if (!in_array($name, Sinks::FOLDABLE, true) || !is_callable($name)) {
+                return null;
+            }
             $r = $name(...$args);
 
+            // @phpstan-ignore function.alreadyNarrowedType, function.alreadyNarrowedType (several of these return false on bad input)
             return is_string($r) || is_int($r) ? (string) $r : null;
         } catch (\Throwable) {
             return null;
@@ -317,9 +321,6 @@ final class Evaluator
         $result = Value::of('');
         $first = true;
         foreach ($pieces->items as $item) {
-            if ($item === null) {
-                continue;
-            }
             if (!$first) {
                 $result = $result->concat($glue);
             }
@@ -358,9 +359,6 @@ final class Evaluator
         }
         $items = [];
         foreach ($list->items as $item) {
-            if ($item === null) {
-                return null;
-            }
             $items[] = new Node\ArrayItem(new Expr\FuncCall(new Node\Name($fn->strings[0]), [new Node\Arg($item->value)]));
         }
 

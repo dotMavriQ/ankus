@@ -145,7 +145,10 @@ final class CapabilityVisitor extends NodeVisitorAbstract
 
     private function scope(): Scope
     {
-        return $this->scopes[array_key_last($this->scopes)];
+        $scope = end($this->scopes);
+        \assert($scope instanceof Scope);
+
+        return $scope;
     }
 
     private function currentClass(): ?string
@@ -347,7 +350,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         }
         if ($name === 'curl_setopt_array' && isset($args[1]) && $args[1]->value instanceof Expr\Array_) {
             foreach ($args[1]->value->items as $item) {
-                if ($item !== null && $item->key !== null && self::isConst($item->key, 'CURLOPT_URL')) {
+                if ($item->key !== null && self::isConst($item->key, 'CURLOPT_URL')) {
                     $this->urlArgument($this->eval->eval($item->value, $scope), $name, $node, false);
                 }
             }
@@ -508,7 +511,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         $this->classSink($class, $args, $node, $scope);
     }
 
-    /** @param list<Node\Arg> $args */
+    /** @param array<int, Node\Arg> $args */
     private function classSink(string $class, array $args, Expr\New_ $node, Scope $scope): void
     {
         foreach (Sinks::CLASSES[$class] ?? [] as $cap) {
@@ -528,25 +531,26 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         if ($class === null && $this->eval->eval($node->class, $scope)->tainted) {
             $this->add(C::DynamicUnresolved, '$class::method()', $node, 'class built from input we could not resolve');
         }
-        if (!$node->name instanceof Node\Identifier) {
-            if ($this->eval->eval($node->name, $scope)->tainted) {
+        $name = $node->name;
+        if (!$name instanceof Node\Identifier) {
+            if ($this->eval->eval($name, $scope)->tainted) {
                 $this->add(C::DynamicUnresolved, 'static method', $node, 'method name built from input we could not resolve');
             }
 
             return;
         }
-        $method = strtolower($node->name->toString());
+        $method = strtolower($name->toString());
         if (in_array($class, ['self', 'static'], true)) {
             $this->replayMethod($this->currentClass(), $method, $node, $scope);
         }
         if ($class !== null) {
             $target = $this->eval->classRef($node->class, $scope);
             if ($target !== null) {
-                $this->edge($target, $node->name->toString(), $node, $scope);
+                $this->edge($target, $name->toString(), $node, $scope);
             }
         } else {
             foreach ($this->eval->eval($node->class, $scope)->strings as $dynamic) {
-                $this->edge($dynamic, $node->name->toString(), $node, $scope);
+                $this->edge($dynamic, $name->toString(), $node, $scope);
             }
         }
         foreach (Sinks::STATIC_METHODS["$class::$method"] ?? [] as $cap) {
@@ -623,7 +627,7 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         }
         $v = $this->eval->eval($e->class, $scope);
 
-        return array_values(array_map(static fn (string $s) => strtolower(ltrim($s, '\\')), $v->strings));
+        return array_map(static fn (string $s) => strtolower(ltrim($s, '\\')), $v->strings);
     }
 
     /**

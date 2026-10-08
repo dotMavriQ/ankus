@@ -57,7 +57,7 @@ final class PackageIndex extends NodeVisitorAbstract
     /** @var list<?string> */
     private array $classStack = [];
 
-    /** @var list<array{string, string}|array{string}|null> [kind, name...] for the current function */
+    /** @var list<array{string, string}|null> [kind, name] for the current function; null for closures */
     private array $functionStack = [];
 
     public function enterNode(Node $node): null

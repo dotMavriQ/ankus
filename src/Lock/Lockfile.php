@@ -54,7 +54,10 @@ final class Lockfile
         ];
     }
 
-    /** @return list<string> "CAP via package" */
+    /**
+     * @param array<string, mixed> $entry
+     * @return list<string> "CAP via package"
+     */
     private static function viaList(array $entry): array
     {
         $out = [];
@@ -124,7 +127,7 @@ final class Lockfile
                 // Reached through a package this one already called into, which
                 // itself gained the capability in this update: report it there.
                 $through = $r->via[$cap][$origin][4] ?? null;
-                if ($was !== null && $through !== null && in_array($through, $was['calls_into'] ?? [], true)
+                if ($was !== null && $through !== null && in_array($through, $was['calls_into'], true)
                     && in_array($cap, $gainedCaps[$through] ?? [], true)) {
                     $consequences[] = $v;
                 } else {
@@ -139,8 +142,8 @@ final class Lockfile
                 array_values(array_diff($was['capabilities'] ?? [], $entry['capabilities'])),
                 array_values(array_diff($entry['triggers'], $was['triggers'] ?? [])),
                 null,
-                array_values($gainedVia),
-                array_values($consequences),
+                $gainedVia,
+                $consequences,
                 array_values(array_diff(self::viaList($was ?? []), self::viaList($entry))),
             );
         }

@@ -16,7 +16,7 @@ use Ankus\Lock\Lockfile;
  */
 final class Cli
 {
-    public const VERSION = '0.1.0-dev';
+    public const VERSION = '0.1.0';
 
     private const USAGE = <<<TXT
     ankus: what can your Composer dependencies do?
@@ -57,8 +57,8 @@ final class Cli
                 'lock' => $this->lock($opts),
                 'check' => $this->check($opts),
                 'diff' => $this->diff($positional, $opts),
-                'version', '--version' => $this->say('ankus ' . self::VERSION) ?? 0,
-                null, 'help', '--help', '-h' => $this->say(self::USAGE) ?? 0,
+                'version', '--version' => $this->print('ankus ' . self::VERSION),
+                null, 'help', '--help', '-h' => $this->print(self::USAGE),
                 default => throw new \InvalidArgumentException("Unknown command: $command"),
             };
         } catch (\Throwable $e) {
@@ -154,6 +154,9 @@ final class Cli
                 continue;
             }
             $r = $c->result;
+            if ($r === null) {
+                continue;
+            }
             $ver = $c->isNew ? "new, {$r->version}" : ($c->previousVersion !== $r->version ? "{$c->previousVersion} -> {$r->version}" : $r->version);
             if (!$c->isViolation()) {
                 $dropped = [...$c->lost, ...$c->lostVia];
@@ -294,6 +297,14 @@ final class Cli
     private static function opt(array $opts, string $name, string $default): string
     {
         return is_string($opts[$name] ?? null) ? $opts[$name] : $default;
+    }
+
+    /** Print a line and return the success exit code. */
+    private function print(string $line): int
+    {
+        $this->say($line);
+
+        return 0;
     }
 
     private function say(string $line): null

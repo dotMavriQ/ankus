@@ -3,12 +3,33 @@
     "description": "Capability analysis for Composer dependencies: know what your vendor code can do, and fail CI when an update gives it new powers.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["security", "supply-chain", "composer", "static-analysis", "capabilities"],
+    "keywords": [
+        "security",
+        "supply-chain",
+        "composer",
+        "static-analysis",
+        "capabilities",
+        "dependencies",
+        "malware"
+    ],
+    "homepage": "https://github.com/dotMavriQ/ankus",
+    "authors": [
+        {
+            "name": "dotmavriq",
+            "homepage": "https://github.com/dotMavriQ"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/dotMavriQ/ankus/issues",
+        "source": "https://github.com/dotMavriQ/ankus",
+        "security": "https://github.com/dotMavriQ/ankus/security/policy"
+    },
     "require": {
         "php": ">=8.2",
         "nikic/php-parser": "^5.0"
     },
     "require-dev": {
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.0"
     },
     "autoload": {
@@ -21,7 +42,9 @@
             "Ankus\\Tests\\": "tests/"
         }
     },
-    "bin": ["bin/ankus"],
+    "bin": [
+        "bin/ankus"
+    ],
     "config": {
         "sort-packages": true,
         "allow-plugins": {}

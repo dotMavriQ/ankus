@@ -8,3 +8,6 @@
 /.gitattributes     export-ignore
 /.gitignore         export-ignore
 /phpunit.xml.dist   export-ignore
+/build              export-ignore
+/phpstan.neon.dist  export-ignore
+/CONTRIBUTING.md    export-ignore

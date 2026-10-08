@@ -47,6 +47,7 @@ final class Scope
         return isset($this->vars[$name]);
     }
 
+    /** @param list<string> $types classes the value may be an instance of */
     public function assign(string $name, Value $value, array $types = []): void
     {
         unset($this->closures[$name]);
@@ -59,6 +60,7 @@ final class Scope
         $this->vars[$name] = $value;
     }
 
+    /** @param list<string> $captured variables a closure captures with `use` */
     public function child(?string $class, string $context, bool $inherit, array $captured = []): self
     {
         $child = new self($class, $context);

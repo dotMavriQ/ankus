@@ -7,7 +7,7 @@ declare(strict_types=1);
 //  - Xdebug off: it slows parsing ~3.5x and is common on dev machines.
 //  - opcache JIT on: ~20-35% faster parsing, off by default for the CLI.
 // ANKUS_NO_RELAUNCH=1 keeps the current process as is.
-if (!getenv('ANKUS_NO_RELAUNCH') && function_exists('pcntl_exec') && PHP_BINARY !== '') {
+if (!getenv('ANKUS_NO_RELAUNCH') && function_exists('pcntl_exec')) {
     // XDEBUG_MODE in the environment overrides the ini value, so ask Xdebug itself.
     $xdebug = extension_loaded('xdebug') && (function_exists('xdebug_info') ? xdebug_info('mode') !== [] : ini_get('xdebug.mode') !== 'off');
     $jit = function_exists('opcache_get_status') && !ini_get('opcache.enable_cli');
@@ -35,7 +35,8 @@ if ($bytes > 0 && $bytes < (1 << 30)) {
 $parserDir = null;
 foreach ([__DIR__ . '/../vendor/nikic/php-parser/lib/PhpParser', __DIR__ . '/../../../nikic/php-parser/lib/PhpParser'] as $candidate) {
     if (is_dir($candidate)) {
-        $parserDir = realpath($candidate);
+        // realpath() does not work inside a PHAR, so keep the path as is there.
+        $parserDir = realpath($candidate) ?: $candidate;
         break;
     }
 }
@@ -61,4 +62,4 @@ if (!class_exists(PhpParser\Node\Scalar\Int_::class)) {
     exit(2);
 }
 
-exit((new Ankus\Cli())->run($argv));
+exit((new Ankus\Cli())->run($_SERVER['argv']));
