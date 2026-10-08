@@ -72,6 +72,37 @@ final class PackageResult
      */
     public array $via = [];
 
+    /**
+     * Specific things the code reaches: hosts it connects to, programs it
+     * runs, secret-looking environment variables, credential paths.
+     *
+     * @var array<string, array<string, array{string, int, string}>> kind => value => [file, line, context]
+     */
+    public array $targets = [];
+
+    public const TARGET_KINDS = ['host', 'command', 'env', 'path'];
+
+    public function addTarget(string $kind, string $value, string $file, int $line, string $context): void
+    {
+        if ($value !== '') {
+            $this->targets[$kind][$value] ??= [$file, $line, $context];
+        }
+    }
+
+    /** @return list<string> "kind:value", sorted */
+    public function targetList(): array
+    {
+        $out = [];
+        foreach ($this->targets as $kind => $values) {
+            foreach (array_keys($values) as $v) {
+                $out[] = "$kind:$v";
+            }
+        }
+        sort($out);
+
+        return $out;
+    }
+
     /** @var array<string, true> packages whose code this one calls directly, filled in by CapabilityGraph */
     public array $callsInto = [];
 
@@ -158,6 +189,7 @@ final class PackageResult
             'capabilities' => array_map(static fn (Capability $c) => $c->value, $this->capabilities()),
             'triggers' => $this->triggers(),
             'via' => $this->viaList(),
+            'targets' => $this->targetList(),
             'files' => $this->files,
             'callbacks' => $this->callbacks,
         ];

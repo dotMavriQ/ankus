@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class FixturesTest extends TestCase
 {
-    /** @return iterable<string, array{string, list<string>}> */
+    /** @return iterable<string, array{string, list<string>, ?list<string>}> */
     public static function fixtures(): iterable
     {
         foreach (PackageAnalyzer::phpFiles(__DIR__ . '/fixtures') as $file) {
@@ -26,13 +26,21 @@ final class FixturesTest extends TestCase
             }
             $expected = trim($m[1]) === 'none' ? [] : array_map('trim', explode(',', $m[1]));
             sort($expected);
-            yield substr($file, strlen(__DIR__ . '/fixtures/')) => [$file, $expected];
+            $targets = null;
+            if (preg_match('/@targets:\s*(.+)$/m', $code, $t)) {
+                $targets = trim($t[1]) === 'none' ? [] : array_map('trim', explode(',', $t[1]));
+                sort($targets);
+            }
+            yield substr($file, strlen(__DIR__ . '/fixtures/')) => [$file, $expected, $targets];
         }
     }
 
-    /** @param list<string> $expected */
+    /**
+     * @param list<string> $expected
+     * @param ?list<string> $targets "kind:value" destinations, checked exactly when the fixture declares them
+     */
     #[DataProvider('fixtures')]
-    public function testFixture(string $file, array $expected): void
+    public function testFixture(string $file, array $expected, ?array $targets): void
     {
         foreach ($expected as $cap) {
             self::assertNotNull(Capability::tryFrom($cap), "Unknown capability $cap in $file");
@@ -54,5 +62,8 @@ final class FixturesTest extends TestCase
             $result->findings(),
         ));
         self::assertSame($expected, $actual, "Capabilities for $file\nEvidence:\n$evidence");
+        if ($targets !== null) {
+            self::assertSame($targets, $result->targetList(), "Targets for $file");
+        }
     }
 }
