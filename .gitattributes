@@ -1,0 +1,10 @@
+# Keep the published package to what ankus needs at runtime. Test harnesses
+# (which run commands and download samples) would otherwise show up as
+# capabilities when ankus scans a vendor/ directory that contains itself.
+/.github            export-ignore
+/corpus             export-ignore
+/oracle             export-ignore
+/tests              export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/phpunit.xml.dist   export-ignore
