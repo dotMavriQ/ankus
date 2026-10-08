@@ -42,7 +42,7 @@ final class LockTest extends TestCase
 
     public function testLockRoundTrip(): void
     {
-        $file = tempnam(sys_get_temp_dir(), 'howdah');
+        $file = tempnam(sys_get_temp_dir(), 'ankus-lock');
         $lock = Lockfile::fromResults([$this->analyze('plugin-v2')]);
         $lock->write($file);
         $read = Lockfile::read($file);

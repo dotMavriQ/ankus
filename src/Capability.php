@@ -37,8 +37,8 @@ enum Capability: string
             self::SensitivePath => 'references credential or key file locations',
             self::Unserialize => 'unserializes data (object injection surface)',
             self::Native => 'loads native code (FFI, dl)',
-            self::Obfuscation => 'feeds encoded or constructed strings into a sink',
-            self::DynamicUnresolved => 'calls something whose name could not be resolved',
+            self::Obfuscation => 'passes an encoded or disguised value to a sensitive function',
+            self::DynamicUnresolved => 'calls a function whose name could not be determined',
             self::Unanalyzable => 'contains PHP that could not be parsed',
         };
     }

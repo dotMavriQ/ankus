@@ -7,7 +7,7 @@ namespace Ankus\Lock;
 use Ankus\PackageResult;
 
 /**
- * howdah.lock: the capabilities each package is approved to have.
+ * ankus.lock: the capabilities each package is approved to have.
  * Only capability names and triggers are stored, never file locations,
  * so the lock only changes when a package's powers change.
  */

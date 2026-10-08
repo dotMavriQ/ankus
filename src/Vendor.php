@@ -51,7 +51,7 @@ final class Vendor
 
         return [
             'name' => (string) ($meta['name'] ?? basename(rtrim($dir, '/'))),
-            'version' => (string) ($meta['version'] ?? 'dir'),
+            'version' => (string) ($meta['version'] ?? 'unversioned'),
             'path' => $dir,
             'meta' => $meta,
         ];

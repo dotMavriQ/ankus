@@ -22,7 +22,7 @@ final class Cli
 
     Usage:
       ankus scan  [--vendor=DIR | --path=DIR] [--json] [-v]   List capabilities per package
-      ankus lock  [--vendor=DIR] [--lock=FILE]                Approve current capabilities (writes howdah.lock)
+      ankus lock  [--vendor=DIR] [--lock=FILE]                Approve current capabilities (writes ankus.lock)
       ankus check [--vendor=DIR] [--lock=FILE] [--json]       Fail if a package gained capabilities
       ankus diff  OLD_DIR NEW_DIR [--json]                    Compare two versions of one package
 
@@ -30,7 +30,7 @@ final class Cli
       --jobs=N      worker processes (default: CPU count)
       --no-cache    don't read or write ~/.cache/ankus
 
-    Defaults: --vendor=vendor  --lock=howdah.lock
+    Defaults: --vendor=vendor  --lock=ankus.lock
     Exit codes: 0 ok, 1 new capabilities found, 2 error
 
     TXT;
@@ -79,7 +79,8 @@ final class Cli
         foreach ($results as $r) {
             $this->printPackage($r, isset($opts['v']));
         }
-        $this->say(sprintf("\n%d packages, %d files scanned.", count($results), array_sum(array_map(fn ($r) => $r->files, $results))));
+        $this->say(sprintf("\n%d %s, %d files scanned. ! marks high-risk capabilities; -v shows where each one comes from.",
+            count($results), count($results) === 1 ? 'package' : 'packages', array_sum(array_map(fn ($r) => $r->files, $results))));
 
         return 0;
     }
@@ -88,7 +89,7 @@ final class Cli
     private function lock(array $opts): int
     {
         $results = $this->analyzeTargets($opts);
-        $file = self::opt($opts, 'lock', 'howdah.lock');
+        $file = self::opt($opts, 'lock', 'ankus.lock');
         Lockfile::fromResults($results)->write($file);
         $this->say(sprintf('Wrote %s with %d packages. Commit it.', $file, count($results)));
 
@@ -98,7 +99,7 @@ final class Cli
     /** @param array<string, string|true> $opts */
     private function check(array $opts): int
     {
-        $lock = Lockfile::read(self::opt($opts, 'lock', 'howdah.lock'));
+        $lock = Lockfile::read(self::opt($opts, 'lock', 'ankus.lock'));
         $changes = $lock->compare($this->analyzeTargets($opts));
 
         return $this->report($changes, isset($opts['json']));
@@ -155,9 +156,9 @@ final class Cli
                 $this->say("  ✓ {$r->name} [$ver]$lost");
                 continue;
             }
-            $this->say("  ✗ musth: {$r->name} [$ver]");
+            $this->say("  ✗ {$r->name} [$ver]");
             foreach ($c->newTriggers as $t) {
-                $this->say("      + trigger $t: " . ($r->triggers()[$t] ?? ''));
+                $this->say('      + ' . self::describeTrigger($t) . ': ' . ($r->triggers()[$t] ?? ''));
             }
             foreach ($c->gained as $cap) {
                 $capability = Capability::from($cap);
@@ -178,8 +179,8 @@ final class Cli
             return 0;
         }
         $this->say(sprintf(
-            "\n%d package(s) gained capabilities. Review the evidence above; if it is expected, run `ankus lock` and commit howdah.lock.",
-            count($violations),
+            "\n%d %s gained capabilities. Review the evidence above; if it is expected, run `ankus lock` and commit ankus.lock.",
+            count($violations), count($violations) === 1 ? 'package' : 'packages',
         ));
 
         return 1;
@@ -191,13 +192,22 @@ final class Cli
         $labels = array_map(static fn (Capability $c) => $c->isHighRisk() ? "!{$c->value}" : $c->value, $caps);
         $this->say(sprintf('%s %s  %s', $r->name, $r->version, $labels === [] ? '(none)' : implode(' ', $labels)));
         foreach ($r->triggers() as $t => $detail) {
-            $this->say("    trigger $t: $detail");
+            $this->say('    ' . self::describeTrigger($t) . ": $detail");
         }
         if ($verbose) {
             foreach ($r->findings() as $f) {
                 $this->say("    {$f->capability->value}  " . self::describeFinding($f));
             }
         }
+    }
+
+    private static function describeTrigger(string $trigger): string
+    {
+        return match ($trigger) {
+            'composer-plugin' => 'runs inside Composer on install/update (composer-plugin)',
+            'autoload-files' => 'runs whenever vendor/autoload.php is loaded (autoload-files)',
+            default => $trigger,
+        };
     }
 
     private static function describeFinding(Finding $f): string
