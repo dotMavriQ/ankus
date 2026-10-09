@@ -1,5 +1,10 @@
 # ankus
 
+[![Packagist](https://img.shields.io/packagist/v/ankus/ankus)](https://packagist.org/packages/ankus/ankus)
+[![PHP](https://img.shields.io/packagist/dependency-v/ankus/ankus/php)](https://packagist.org/packages/ankus/ankus)
+[![CI](https://github.com/dotMavriQ/ankus/actions/workflows/ci.yml/badge.svg)](https://github.com/dotMavriQ/ankus/actions/workflows/ci.yml)
+[![License](https://img.shields.io/packagist/l/ankus/ankus)](LICENSE)
+
 ankus reports what the packages in your `vendor/` directory are able to do
 (run shell commands, open network connections, evaluate code, read
 environment variables, and so on) and fails when an update gives a package an
@@ -85,11 +90,8 @@ installed inside a project instead, it uses that project's copy of
 
 ### As a development dependency
 
-ankus is not on Packagist yet; until it is, add the GitHub repository:
-
 ```sh
-composer config repositories.ankus vcs https://github.com/dotMavriQ/ankus
-composer require --dev ankus/ankus:dev-master
+composer require --dev ankus/ankus
 vendor/bin/ankus --version
 ```
 
