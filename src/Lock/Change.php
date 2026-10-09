@@ -27,6 +27,8 @@ final readonly class Change
         public array $consequences = [],
         /** @var list<string> "CAP via package" no longer reached */
         public array $lostVia = [],
+        /** Same released version, different code: a rewritten tag or a tampered vendor/. */
+        public bool $codeChangedSameVersion = false,
     ) {
     }
 
@@ -43,7 +45,7 @@ final readonly class Change
     /** Needs human approval: the package can now do something it couldn't. */
     public function isViolation(): bool
     {
-        return $this->gained !== [] || $this->newTriggers !== [] || $this->gainedVia !== [];
+        return $this->gained !== [] || $this->newTriggers !== [] || $this->gainedVia !== [] || $this->codeChangedSameVersion;
     }
 
     public function isInteresting(): bool

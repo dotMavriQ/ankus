@@ -15,7 +15,7 @@ final class Lockfile
 {
     public const VERSION = 2;
 
-    /** @param array<string, array{version: string, capabilities: list<string>, via: array<string, list<string>>, calls_into: list<string>, triggers: list<string>}> $packages */
+    /** @param array<string, array{version: string, code: string, capabilities: list<string>, via: array<string, list<string>>, calls_into: list<string>, triggers: list<string>}> $packages */
     public function __construct(public array $packages = [])
     {
     }
@@ -33,10 +33,11 @@ final class Lockfile
     }
 
     /**
-     * `via` maps a capability to the packages it is reached in; `calls_into`
-     * lists every package whose code this one calls directly.
+     * `code` is a hash of the package's PHP files. `via` maps a capability to
+     * the packages it is reached in. `calls_into` lists the classes and
+     * functions in other packages that this one calls.
      *
-     * @return array{version: string, capabilities: list<string>, via: array<string, list<string>>, calls_into: list<string>, triggers: list<string>}
+     * @return array{version: string, code: string, capabilities: list<string>, via: array<string, list<string>>, calls_into: list<string>, triggers: list<string>}
      */
     public static function entry(PackageResult $r): array
     {
@@ -47,9 +48,10 @@ final class Lockfile
 
         return [
             'version' => $r->version,
+            'code' => $r->contentHash,
             'capabilities' => array_map(static fn ($c) => $c->value, $r->capabilities()),
             'via' => $via,
-            'calls_into' => array_keys($r->callsInto),
+            'calls_into' => array_keys($r->callsClasses),
             'triggers' => array_keys($r->triggers()),
         ];
     }
@@ -106,34 +108,35 @@ final class Lockfile
     public function compare(array $current): array
     {
         $now = [];
-        $gainedCaps = [];
+        $changed = [];
         foreach ($current as $r) {
             $now[$r->name] = self::entry($r);
             $was = $this->packages[$r->name] ?? null;
-            $gainedCaps[$r->name] = [
-                ...array_diff($now[$r->name]['capabilities'], $was['capabilities'] ?? []),
-                ...array_map(static fn ($v) => strstr($v, ' ', true), array_diff(self::viaList($now[$r->name]), self::viaList($was ?? []))),
-            ];
+            $changed[$r->name] = $was === null || $was['version'] !== $r->version || $was['code'] !== $r->contentHash;
         }
 
         $changes = [];
         foreach ($current as $r) {
             $entry = $now[$r->name];
             $was = $this->packages[$r->name] ?? null;
+            $sameCode = $was !== null && $was['code'] === $entry['code'];
             $gainedVia = [];
             $consequences = [];
             foreach (array_diff(self::viaList($entry), self::viaList($was ?? [])) as $v) {
                 [$cap, , $origin] = explode(' ', $v, 3);
-                // Reached through a package this one already called into, which
-                // itself gained the capability in this update: report it there.
-                $through = $r->via[$cap][$origin][4] ?? null;
-                if ($was !== null && $through !== null && in_array($through, $was['calls_into'], true)
-                    && in_array($cap, $gainedCaps[$through] ?? [], true)) {
+                [, , , , $through, $called] = $r->via[$cap][$origin] + [4 => '', 5 => ''];
+                // Not something this package started doing if its own code is
+                // unchanged, or if it already called that class and the class's
+                // package is what changed. Whatever changed there is checked on
+                // its own.
+                if ($sameCode || ($was !== null && in_array($called, $was['calls_into'], true) && ($changed[$through] ?? false))) {
                     $consequences[] = $v;
                 } else {
                     $gainedVia[] = $v;
                 }
             }
+            $rewritten = $was !== null && $was['version'] === $entry['version'] && $was['code'] !== ''
+                && $was['code'] !== $entry['code'] && !self::isMovingVersion($entry['version']);
             $changes[] = new Change(
                 $r,
                 $was === null,
@@ -145,6 +148,7 @@ final class Lockfile
                 $gainedVia,
                 $consequences,
                 array_values(array_diff(self::viaList($was ?? []), self::viaList($entry))),
+                $rewritten,
             );
         }
         foreach (array_keys(array_diff_key($this->packages, $now)) as $name) {
@@ -152,5 +156,11 @@ final class Lockfile
         }
 
         return array_values(array_filter($changes, static fn (Change $c) => $c->isInteresting()));
+    }
+
+    /** Branch versions (dev-main, 2.x-dev) and unversioned directories change code by design. */
+    private static function isMovingVersion(string $version): bool
+    {
+        return $version === 'unversioned' || str_starts_with($version, 'dev-') || str_ends_with($version, '-dev');
     }
 }

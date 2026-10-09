@@ -18,6 +18,10 @@ First release.
 - Reports capabilities reached through other packages, such as
   `EXEC via symfony/process`.
 - Reports Composer plugins and `autoload.files` as triggers.
+- Fails when a released version's code changes without a new version number,
+  which is how rewritten tags and edited `vendor/` directories show up.
+- Files that parse but are not valid PHP are reported as `UNANALYZABLE` instead
+  of stopping the analysis.
 - `ankus.lock` records the approved state.
 - Content-addressed result cache, parallel analysis, and a restart without
   Xdebug and with the opcache JIT.

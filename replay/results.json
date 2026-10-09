@@ -1,0 +1,1441 @@
+{
+    "BookStack": [
+        {
+            "commit": "2c81447c9e",
+            "date": "2025-10-21",
+            "baseline": true
+        },
+        {
+            "commit": "4a57933cd1",
+            "date": "2025-11-02",
+            "packages_changed": 16,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "1421ba871d",
+            "date": "2025-11-09",
+            "packages_changed": 12,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "99a1d82f0a",
+            "date": "2025-11-18",
+            "packages_changed": 12,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "league/uri",
+                    "from": "7.5.1",
+                    "to": "7.6.0",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_WRITE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_WRITE fopen() Uri.php:1315"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "9934f85ba9",
+            "date": "2025-11-21",
+            "packages_changed": 4,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "4f760479c3",
+            "date": "2025-12-17",
+            "packages_changed": 40,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "aws/aws-sdk-php",
+                    "from": "3.362.1",
+                    "to": "3.366.4",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "ENV via symfony/filesystem",
+                        "FILE_READ via symfony/filesystem",
+                        "FILE_WRITE via symfony/filesystem"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "laravel/framework",
+                    "from": "v12.39.0",
+                    "to": "v12.42.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "ENV via symfony/filesystem",
+                        "FILE_READ via symfony/filesystem",
+                        "FILE_WRITE via symfony/filesystem"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "symfony/error-handler",
+                    "from": "v7.3.6",
+                    "to": "v7.4.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "ENV via symfony/filesystem",
+                        "FILE_READ via symfony/filesystem",
+                        "FILE_WRITE via symfony/filesystem"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "symfony/filesystem",
+                    "from": null,
+                    "to": "v7.4.0",
+                    "new_package": true,
+                    "gained": [
+                        "ENV",
+                        "FILE_READ",
+                        "FILE_WRITE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_READ fopen() Filesystem.php:754",
+                        "FILE_READ file_get_contents() Filesystem.php:754 (dynamic call resolved to file_get_contents())",
+                        "FILE_WRITE chmod() Filesystem.php:754 (dynamic call resolved to chmod())",
+                        "FILE_WRITE touch() Filesystem.php:754 (dynamic call resolved to touch())",
+                        "FILE_WRITE mkdir() Filesystem.php:754 (dynamic call resolved to mkdir())",
+                        "FILE_WRITE unlink() Filesystem.php:754 (dynamic call resolved to unlink())"
+                    ]
+                },
+                {
+                    "package": "symfony/http-kernel",
+                    "from": "v7.3.7",
+                    "to": "v7.4.2",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "ENV via symfony/filesystem",
+                        "FILE_READ via symfony/filesystem",
+                        "FILE_WRITE via symfony/filesystem"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "2de3247ae4",
+            "date": "2025-12-19",
+            "packages_changed": 9,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "3336e0c6ae",
+            "date": "2025-12-24",
+            "packages_changed": 5,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "082befb2fc",
+            "date": "2025-12-30",
+            "packages_changed": 4,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "19f02d927e",
+            "date": "2026-01-22",
+            "packages_changed": 27,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "larastan/larastan",
+                    "from": "v3.8.1",
+                    "to": "v3.9.1",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_WRITE",
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [
+                        "ENV via nunomaduro/collision",
+                        "FILE_READ via filp/whoops",
+                        "UNSERIALIZE via filp/whoops"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_WRITE file_put_contents() src/Properties/MigrationCache.php:79",
+                        "FILE_WRITE rename() src/Properties/MigrationCache.php:80",
+                        "FILE_WRITE unlink() src/Properties/MigrationCache.php:115",
+                        "FILE_WRITE fopen() src/Properties/MigrationCache.php:148",
+                        "UNSERIALIZE unserialize() src/Properties/MigrationCache.php:100"
+                    ]
+                },
+                {
+                    "package": "thecodingmachine/safe",
+                    "from": null,
+                    "to": "v3.3.0",
+                    "new_package": true,
+                    "gained": [
+                        "ENV",
+                        "EXEC",
+                        "FILE_READ",
+                        "FILE_WRITE",
+                        "NATIVE",
+                        "NETWORK"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "ENV apache_getenv() generated/8.1/apache.php:38",
+                        "ENV apache_setenv() generated/8.1/apache.php:146",
+                        "ENV putenv() generated/8.1/info.php:665",
+                        "ENV apache_getenv() generated/8.2/apache.php:38",
+                        "ENV apache_setenv() generated/8.2/apache.php:146",
+                        "ENV putenv() generated/8.2/info.php:665"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "3e5e88dc87",
+            "date": "2026-01-29",
+            "packages_changed": 26,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "1077a4efd0",
+            "date": "2026-02-21",
+            "packages_changed": 21,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "ezyang/htmlpurifier",
+                    "from": null,
+                    "to": "v4.19.0",
+                    "new_package": true,
+                    "gained": [
+                        "CODE_EVAL",
+                        "DYNAMIC_INCLUDE",
+                        "DYNAMIC_UNRESOLVED",
+                        "FILE_READ",
+                        "FILE_WRITE",
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "DYNAMIC_INCLUDE require_once library/HTMLPurifier/Bootstrap.php:49",
+                        "DYNAMIC_INCLUDE include library/HTMLPurifier/LanguageFactory.php:167",
+                        "FILE_READ parse_ini_file() library/HTMLPurifier/Config.php:836",
+                        "FILE_READ file_get_contents() library/HTMLPurifier/ConfigSchema.php:71",
+                        "FILE_READ parse_ini_file() library/HTMLPurifier/ConfigSchema/InterchangeBuilder.php:42",
+                        "FILE_READ opendir() library/HTMLPurifier/ConfigSchema/InterchangeBuilder.php:47"
+                    ]
+                },
+                {
+                    "package": "nunomaduro/collision",
+                    "from": "v8.8.3",
+                    "to": "v8.9.1",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_READ"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_READ file_get_contents() scripts/fix-pdo-constant.php:16"
+                    ]
+                },
+                {
+                    "package": "thecodingmachine/safe",
+                    "from": "v3.3.0",
+                    "to": "v3.4.0",
+                    "new_package": false,
+                    "gained": [
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "UNSERIALIZE unserialize() lib/special_cases.php:573"
+                    ]
+                },
+                {
+                    "package": "xemlock/htmlpurifier-html5",
+                    "from": null,
+                    "to": "v0.1.12",
+                    "new_package": true,
+                    "gained": [],
+                    "gained_via": [
+                        "FILE_READ via ezyang/htmlpurifier",
+                        "FILE_READ via masterminds/html5",
+                        "FILE_WRITE via ezyang/htmlpurifier",
+                        "FILE_WRITE via masterminds/html5",
+                        "UNSERIALIZE via ezyang/htmlpurifier"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "d0d1bb9829",
+            "date": "2026-03-06",
+            "packages_changed": 25,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "sabberworm/php-css-parser",
+                    "from": "v9.1.0",
+                    "to": "v9.2.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "49df47836e",
+            "date": "2026-03-15",
+            "packages_changed": 17,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "4f18fea086",
+            "date": "2026-03-15",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "0120b475eb",
+            "date": "2026-03-17",
+            "packages_changed": 5,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "5ebc1fe3b0",
+            "date": "2026-03-22",
+            "packages_changed": 7,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "laravel/prompts",
+                    "from": "v0.3.14",
+                    "to": "v0.3.15",
+                    "new_package": false,
+                    "gained": [
+                        "ENV",
+                        "FILE_READ"
+                    ],
+                    "gained_via": [
+                        "ENV via symfony/process",
+                        "EXEC via symfony/process",
+                        "FILE_READ via symfony/process",
+                        "FILE_WRITE via symfony/process"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "ENV getenv() src/Terminal.php:144",
+                        "FILE_READ fopen() src/Terminal.php:187"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "dfc91d533b",
+            "date": "2026-05-17",
+            "packages_changed": 43,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "2c49502345",
+            "date": "2026-05-25",
+            "packages_changed": 30,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "nette/utils",
+                    "from": "v4.1.3",
+                    "to": "v4.1.4",
+                    "new_package": false,
+                    "gained": [
+                        "EXEC"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "EXEC proc_open() src/Utils/Process.php:124",
+                        "EXEC exec() src/Utils/Process.php:210"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "67529dd883",
+            "date": "2026-05-28",
+            "packages_changed": 22,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "6b545d600c",
+            "date": "2026-06-09",
+            "packages_changed": 9,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "ad283ef0ed",
+            "date": "2026-07-02",
+            "packages_changed": 32,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "firebase/php-jwt",
+                    "from": "v7.0.5",
+                    "to": "v7.1.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "CODE_EVAL via phpseclib/phpseclib",
+                        "NETWORK via phpseclib/phpseclib"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "de6e6f3dd9",
+            "date": "2026-07-29",
+            "packages_changed": 24,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "f791ce0eef",
+            "date": "2026-09-17",
+            "packages_changed": 54,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "mockery/mockery",
+                    "from": "1.6.12",
+                    "to": "1.6.15",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "EXEC via sebastian/version",
+                        "FILE_READ via phpunit/php-file-iterator",
+                        "FILE_READ via phpunit/phpunit",
+                        "FILE_WRITE via phpunit/phpunit",
+                        "UNSERIALIZE via phpunit/phpunit"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "27f35a3895",
+            "date": "2026-09-24",
+            "packages_changed": 23,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "aa6f42e929",
+            "date": "2026-09-29",
+            "packages_changed": 6,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "ff661b59f6",
+            "date": "2026-10-08",
+            "packages_changed": 22,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "symfony/polyfill-intl-grapheme",
+                    "from": "v1.41.0",
+                    "to": "v1.43.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "DYNAMIC_INCLUDE via symfony/polyfill-intl-normalizer"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        }
+    ],
+    "Firefly III": [
+        {
+            "commit": "860ae9d931",
+            "date": "2025-10-31",
+            "baseline": true
+        },
+        {
+            "commit": "feb6ecb01c",
+            "date": "2025-11-01",
+            "packages_changed": 3,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "2c44bbb009",
+            "date": "2025-11-08",
+            "packages_changed": 16,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "jean85/pretty-package-versions",
+                    "from": null,
+                    "to": "2.1.1",
+                    "new_package": true,
+                    "gained": [],
+                    "gained_via": [
+                        "DYNAMIC_INCLUDE via rector/rector",
+                        "DYNAMIC_INCLUDE via symfony/polyfill-intl-normalizer",
+                        "DYNAMIC_INCLUDE via symfony/polyfill-mbstring",
+                        "DYNAMIC_UNRESOLVED via rector/rector",
+                        "ENV via rector/rector",
+                        "EXEC via rector/rector",
+                        "FILE_READ via rector/rector",
+                        "FILE_WRITE via rector/rector"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "sentry/sentry",
+                    "from": null,
+                    "to": "4.18.0",
+                    "new_package": true,
+                    "gained": [
+                        "CODE_EVAL",
+                        "ENV",
+                        "FILE_READ",
+                        "FILE_WRITE",
+                        "NETWORK"
+                    ],
+                    "gained_via": [
+                        "FILE_READ via guzzlehttp/psr7",
+                        "FILE_WRITE via guzzlehttp/psr7"
+                    ],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "NETWORK curl_init() src/HttpClient/HttpClient.php:47",
+                        "NETWORK curl_exec() src/HttpClient/HttpClient.php:104",
+                        "NETWORK curl_init() src/Spotlight/SpotlightClient.php:26",
+                        "NETWORK curl_exec() src/Spotlight/SpotlightClient.php:40",
+                        "FILE_READ new SplFileObject src/Integration/FrameContextifierIntegration.php:135",
+                        "FILE_WRITE file_put_contents() src/Logger/DebugFileLogger.php:21"
+                    ]
+                },
+                {
+                    "package": "sentry/sentry-laravel",
+                    "from": null,
+                    "to": "4.18.0",
+                    "new_package": true,
+                    "gained": [
+                        "FILE_READ",
+                        "FILE_WRITE"
+                    ],
+                    "gained_via": [
+                        "DYNAMIC_INCLUDE via laravel/framework",
+                        "DYNAMIC_INCLUDE via nesbot/carbon",
+                        "DYNAMIC_INCLUDE via symfony/translation",
+                        "DYNAMIC_INCLUDE via voku/portable-ascii",
+                        "ENV via sentry/sentry",
+                        "ENV via symfony/process",
+                        "EXEC via symfony/process",
+                        "FILE_READ via guzzlehttp/psr7",
+                        "FILE_READ via nesbot/carbon",
+                        "FILE_READ via sentry/sentry",
+                        "FILE_READ via symfony/translation",
+                        "FILE_WRITE via guzzlehttp/psr7",
+                        "FILE_WRITE via sebastian/diff",
+                        "FILE_WRITE via sentry/sentry",
+                        "NETWORK via sentry/sentry",
+                        "UNSERIALIZE via nesbot/carbon"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_READ file_get_contents() src/Sentry/Laravel/Console/PublishCommand.php:93",
+                        "FILE_READ file_get_contents() src/Sentry/Laravel/Console/PublishCommand.php:130",
+                        "FILE_READ file_get_contents() src/Sentry/Laravel/Tracing/BacktraceHelper.php:86",
+                        "FILE_WRITE file_put_contents() src/Sentry/Laravel/Console/PublishCommand.php:119"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "4456b00cae",
+            "date": "2025-11-12",
+            "packages_changed": 5,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "91889332b4",
+            "date": "2025-11-13",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "40fe0d9c57",
+            "date": "2025-11-13",
+            "packages_changed": 3,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "2bee3d2728",
+            "date": "2025-11-28",
+            "packages_changed": 44,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "league/uri",
+                    "from": "7.5.1",
+                    "to": "7.6.0",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_WRITE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_WRITE fopen() Uri.php:1315"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "b45aadf8a3",
+            "date": "2025-12-14",
+            "packages_changed": 31,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "phpunit/php-code-coverage",
+                    "from": "12.4.0",
+                    "to": "12.5.1",
+                    "new_package": false,
+                    "gained": [
+                        "NETWORK"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "NETWORK sha1_file() src/Node/Builder.php:80 (path built from unresolvable input; may be a URL)"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "f475947776",
+            "date": "2025-12-15",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "230a3a0180",
+            "date": "2025-12-16",
+            "packages_changed": 3,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "067112904e",
+            "date": "2026-01-06",
+            "packages_changed": 29,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "e7b67bc85e",
+            "date": "2026-01-17",
+            "packages_changed": 8,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "abfaee5a55",
+            "date": "2026-01-28",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "b0e1b6fe51",
+            "date": "2026-01-29",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "154abf1fc0",
+            "date": "2026-02-07",
+            "packages_changed": 40,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "fruitcake/laravel-debugbar",
+                    "from": null,
+                    "to": "v4.0.7",
+                    "new_package": true,
+                    "gained": [
+                        "FILE_READ"
+                    ],
+                    "gained_via": [
+                        "DYNAMIC_INCLUDE via laravel/framework",
+                        "DYNAMIC_INCLUDE via nesbot/carbon",
+                        "DYNAMIC_INCLUDE via symfony/translation",
+                        "DYNAMIC_INCLUDE via voku/portable-ascii",
+                        "ENV via symfony/error-handler",
+                        "ENV via symfony/var-dumper",
+                        "ENV via vlucas/phpdotenv",
+                        "EXEC via ramsey/uuid",
+                        "FILE_READ via league/uri",
+                        "FILE_READ via nesbot/carbon",
+                        "FILE_READ via php-debugbar/php-debugbar",
+                        "FILE_READ via ramsey/uuid",
+                        "FILE_READ via symfony/http-foundation",
+                        "FILE_READ via symfony/translation",
+                        "FILE_WRITE via league/uri",
+                        "FILE_WRITE via php-debugbar/php-debugbar",
+                        "FILE_WRITE via sebastian/diff",
+                        "FILE_WRITE via symfony/http-foundation",
+                        "FILE_WRITE via symfony/var-dumper",
+                        "NETWORK via php-debugbar/php-debugbar",
+                        "UNSERIALIZE via nesbot/carbon"
+                    ],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "FILE_READ glob() src/DataCollector/InertiaCollector.php:50",
+                        "FILE_READ fopen() src/DataCollector/LogsCollector.php:73"
+                    ]
+                },
+                {
+                    "package": "larastan/larastan",
+                    "from": "v3.8.1",
+                    "to": "v3.9.2",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_WRITE",
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [
+                        "ENV via nunomaduro/collision",
+                        "FILE_READ via filp/whoops",
+                        "UNSERIALIZE via filp/whoops"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_WRITE file_put_contents() src/Properties/MigrationCache.php:79",
+                        "FILE_WRITE rename() src/Properties/MigrationCache.php:80",
+                        "FILE_WRITE unlink() src/Properties/MigrationCache.php:115",
+                        "FILE_WRITE fopen() src/Properties/MigrationCache.php:148",
+                        "UNSERIALIZE unserialize() src/Properties/MigrationCache.php:100"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "8735be2f6b",
+            "date": "2026-02-08",
+            "packages_changed": 3,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "c231ae4016",
+            "date": "2026-02-14",
+            "packages_changed": 12,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "642deefba5",
+            "date": "2026-02-14",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "4bcd163b47",
+            "date": "2026-02-15",
+            "packages_changed": 2,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "thecodingmachine/safe",
+                    "from": "v3.3.0",
+                    "to": "v3.4.0",
+                    "new_package": false,
+                    "gained": [
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "UNSERIALIZE unserialize() lib/special_cases.php:573"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "0e321ad82a",
+            "date": "2026-02-20",
+            "packages_changed": 6,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "nunomaduro/collision",
+                    "from": "v8.8.3",
+                    "to": "v8.9.1",
+                    "new_package": false,
+                    "gained": [
+                        "FILE_READ"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "FILE_READ file_get_contents() scripts/fix-pdo-constant.php:16"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "62ef3966ed",
+            "date": "2026-02-23",
+            "packages_changed": 5,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "bd14273201",
+            "date": "2026-02-27",
+            "packages_changed": 20,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "6f4143bb79",
+            "date": "2026-03-06",
+            "packages_changed": 6,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "aee804940b",
+            "date": "2026-03-15",
+            "packages_changed": 15,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "490c421ae5",
+            "date": "2026-03-15",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "ddb5bc6038",
+            "date": "2026-03-20",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "d50c283973",
+            "date": "2026-03-20",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "4190c4d243",
+            "date": "2026-03-21",
+            "packages_changed": 18,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "laravel/prompts",
+                    "from": "v0.3.14",
+                    "to": "v0.3.15",
+                    "new_package": false,
+                    "gained": [
+                        "ENV",
+                        "FILE_READ"
+                    ],
+                    "gained_via": [
+                        "ENV via symfony/process",
+                        "EXEC via symfony/process",
+                        "FILE_READ via symfony/process",
+                        "FILE_WRITE via symfony/process"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "ENV getenv() src/Terminal.php:144",
+                        "FILE_READ fopen() src/Terminal.php:187"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "928711f491",
+            "date": "2026-04-13",
+            "packages_changed": 28,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "laravel/passport",
+                    "from": "v12.4.3",
+                    "to": "v13.7.1",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "EXEC via symfony/mime",
+                        "FILE_WRITE via symfony/psr-http-message-bridge"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "c2a7e35d1e",
+            "date": "2026-04-18",
+            "packages_changed": 4,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "9ee2d4d487",
+            "date": "2026-04-19",
+            "packages_changed": 68,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "laravel/passport",
+                    "from": "v13.7.1",
+                    "to": "v13.7.4",
+                    "new_package": false,
+                    "gained": [
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "UNSERIALIZE unserialize() src/Http/Controllers/RetrievesAuthRequestFromSession.php:30",
+                        "UNSERIALIZE unserialize() src/Http/Controllers/RetrievesDeviceCodeFromSession.php:30"
+                    ]
+                },
+                {
+                    "package": "nunomaduro/collision",
+                    "from": "v8.9.1",
+                    "to": "v8.9.3",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "FILE_READ via phpunit/php-code-coverage",
+                        "FILE_READ via phpunit/php-text-template",
+                        "FILE_WRITE via phpunit/php-code-coverage",
+                        "FILE_WRITE via phpunit/php-text-template",
+                        "NETWORK via phpunit/php-code-coverage",
+                        "UNSERIALIZE via phpunit/php-code-coverage"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "phpunit/php-code-coverage",
+                    "from": "12.5.6",
+                    "to": "14.1.3",
+                    "new_package": false,
+                    "gained": [
+                        "DYNAMIC_INCLUDE"
+                    ],
+                    "gained_via": [
+                        "EXEC via sebastian/git-state"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "DYNAMIC_INCLUDE require src/Serialization/Unserializer.php:78"
+                    ]
+                },
+                {
+                    "package": "phpunit/phpunit",
+                    "from": "12.5.22",
+                    "to": "13.1.7",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "EXEC via sebastian/git-state"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "sebastian/git-state",
+                    "from": null,
+                    "to": "1.0.0",
+                    "new_package": true,
+                    "gained": [
+                        "EXEC"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "EXEC proc_open() src/ShellCommandRunnerImplementation.php:32"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "8c8af51bc4",
+            "date": "2026-04-27",
+            "packages_changed": 19,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "carthage-software/mago",
+                    "from": null,
+                    "to": "1.24.0",
+                    "new_package": true,
+                    "gained": [
+                        "ENV",
+                        "EXEC",
+                        "FILE_READ",
+                        "FILE_WRITE",
+                        "NETWORK"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "FILE_WRITE fopen() composer/internal.php:80",
+                        "FILE_WRITE fopen() composer/internal.php:390",
+                        "FILE_WRITE unlink() composer/internal.php:419",
+                        "FILE_WRITE file_put_contents() composer/internal.php:455",
+                        "FILE_WRITE unlink() composer/internal.php:470",
+                        "FILE_WRITE unlink() composer/internal.php:478"
+                    ]
+                },
+                {
+                    "package": "phpunit/php-code-coverage",
+                    "from": "14.1.3",
+                    "to": "14.1.6",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "FILE_WRITE via sebastian/diff"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "1678c15905",
+            "date": "2026-05-21",
+            "packages_changed": 46,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "nette/utils",
+                    "from": "v4.1.3",
+                    "to": "v4.1.4",
+                    "new_package": false,
+                    "gained": [
+                        "EXEC"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "EXEC proc_open() src/Utils/Process.php:124",
+                        "EXEC exec() src/Utils/Process.php:210"
+                    ]
+                },
+                {
+                    "package": "symfony/polyfill-php86",
+                    "from": null,
+                    "to": "v1.37.0",
+                    "new_package": true,
+                    "gained": [],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "891f5cb42b",
+            "date": "2026-05-29",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "2701d35048",
+            "date": "2026-06-16",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "4c1e678f1b",
+            "date": "2026-06-16",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "8529c71765",
+            "date": "2026-06-19",
+            "packages_changed": 28,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "symfony/http-kernel",
+                    "from": "v8.0.12",
+                    "to": "v8.1.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "ENV via symfony/process",
+                        "EXEC via symfony/process",
+                        "FILE_READ via symfony/process",
+                        "FILE_WRITE via symfony/process"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "6535a3741f",
+            "date": "2026-06-30",
+            "packages_changed": 53,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "firebase/php-jwt",
+                    "from": "v7.0.5",
+                    "to": "v7.1.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "CODE_EVAL via phpseclib/phpseclib",
+                        "NETWORK via phpseclib/phpseclib"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "symfony/http-client",
+                    "from": "v8.0.9",
+                    "to": "v8.1.1",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "FILE_READ via guzzlehttp/psr7",
+                        "FILE_WRITE via guzzlehttp/psr7"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "symfony/polyfill-deepclone",
+                    "from": null,
+                    "to": "v1.40.0",
+                    "new_package": true,
+                    "gained": [
+                        "FILE_READ",
+                        "UNSERIALIZE"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": [
+                        "UNSERIALIZE unserialize() DeepClone.php:425",
+                        "UNSERIALIZE unserialize() DeepClone.php:427",
+                        "UNSERIALIZE unserialize() DeepClone.php:753",
+                        "UNSERIALIZE unserialize() DeepClone.php:862",
+                        "UNSERIALIZE unserialize() DeepClone.php:891",
+                        "UNSERIALIZE unserialize() DeepClone.php:893"
+                    ]
+                }
+            ]
+        },
+        {
+            "commit": "a95b82b14c",
+            "date": "2026-07-01",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "8a95fb4fc0",
+            "date": "2026-07-21",
+            "packages_changed": 3,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "e7ae1142bb",
+            "date": "2026-08-04",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "ba284c0f5b",
+            "date": "2026-08-07",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "969295e1e3",
+            "date": "2026-09-02",
+            "packages_changed": 2,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "6b82da5edf",
+            "date": "2026-09-14",
+            "packages_changed": 82,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "carthage-software/mago",
+                    "from": "1.42.0",
+                    "to": "1.48.1",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "DYNAMIC_UNRESOLVED via revolt/event-loop",
+                        "ENV via revolt/event-loop",
+                        "EXEC via sebastian/version",
+                        "FILE_WRITE via sebastian/diff"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "fruitcake/laravel-debugbar",
+                    "from": "v4.3.0",
+                    "to": "v4.4.3",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "EXEC via laravel/framework",
+                        "FILE_READ via laravel/framework",
+                        "FILE_WRITE via laravel/framework"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "magentron/laravel-blade-lint",
+                    "from": null,
+                    "to": "2.0.3",
+                    "new_package": true,
+                    "gained": [
+                        "EXEC",
+                        "FILE_READ",
+                        "FILE_WRITE"
+                    ],
+                    "gained_via": [
+                        "ENV via symfony/console",
+                        "FILE_READ via symfony/finder"
+                    ],
+                    "new_triggers": [],
+                    "evidence": [
+                        "EXEC pcntl_fork() src/Magentron/BladeLint/Console/Commands/BladeLint.php:200",
+                        "EXEC proc_open() src/Magentron/BladeLint/Console/Commands/BladeLint.php:319",
+                        "EXEC popen() src/Magentron/BladeLint/Console/Commands/BladeLint.php:423",
+                        "EXEC exec() src/Magentron/BladeLint/Console/Commands/BladeLint.php:435",
+                        "EXEC popen() src/Magentron/BladeLint/Console/Commands/BladeLint.php:437",
+                        "EXEC posix_kill() src/Magentron/BladeLint/Console/Commands/BladeLint.php:503"
+                    ]
+                },
+                {
+                    "package": "mockery/mockery",
+                    "from": "1.6.12",
+                    "to": "1.6.15",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "EXEC via sebastian/version"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "phpunit/php-code-coverage",
+                    "from": "14.2.2",
+                    "to": "14.3.3",
+                    "new_package": false,
+                    "gained": [
+                        "EXEC"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "EXEC proc_open() src/Report/Html/ControlFlowGraph.php:207"
+                    ]
+                },
+                {
+                    "package": "revolt/event-loop",
+                    "from": null,
+                    "to": "v1.0.9",
+                    "new_package": true,
+                    "gained": [
+                        "DYNAMIC_UNRESOLVED",
+                        "ENV"
+                    ],
+                    "gained_via": [],
+                    "new_triggers": [],
+                    "evidence": [
+                        "ENV getenv() src/EventLoop/DriverFactory.php:46",
+                        "ENV getenv() src/EventLoop/DriverFactory.php:58",
+                        "ENV getenv() src/EventLoop/Internal/AbstractDriver.php:72",
+                        "DYNAMIC_UNRESOLVED new $class src/EventLoop/DriverFactory.php:80 (class name built from input we could not resolve)"
+                    ]
+                },
+                {
+                    "package": "symfony/http-client",
+                    "from": "v8.1.1",
+                    "to": "v8.1.6",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "DYNAMIC_UNRESOLVED via revolt/event-loop",
+                        "ENV via revolt/event-loop"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                },
+                {
+                    "package": "symfony/polyfill-php82",
+                    "from": null,
+                    "to": "v1.38.1",
+                    "new_package": true,
+                    "gained": [],
+                    "gained_via": [],
+                    "new_triggers": [
+                        "autoload-files"
+                    ],
+                    "evidence": []
+                }
+            ]
+        },
+        {
+            "commit": "6118fbc5ba",
+            "date": "2026-09-15",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "e36b2ab28e",
+            "date": "2026-09-16",
+            "packages_changed": 14,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "99f9b7477d",
+            "date": "2026-09-18",
+            "packages_changed": 4,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "c196cdc9a5",
+            "date": "2026-09-25",
+            "packages_changed": 13,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "e23f89d449",
+            "date": "2026-09-27",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "7879e01a0f",
+            "date": "2026-09-28",
+            "packages_changed": 1,
+            "failed": false,
+            "violations": []
+        },
+        {
+            "commit": "57371b9f82",
+            "date": "2026-10-03",
+            "packages_changed": 29,
+            "failed": true,
+            "violations": [
+                {
+                    "package": "symfony/polyfill-intl-grapheme",
+                    "from": "v1.41.0",
+                    "to": "v1.43.0",
+                    "new_package": false,
+                    "gained": [],
+                    "gained_via": [
+                        "DYNAMIC_INCLUDE via symfony/polyfill-intl-normalizer"
+                    ],
+                    "new_triggers": [],
+                    "evidence": []
+                }
+            ]
+        }
+    ]
+}

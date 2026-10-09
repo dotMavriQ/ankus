@@ -1,0 +1,8 @@
+{
+    "_readme": "Open-source PHP applications with a committed composer.lock. replay/run.php walks every commit from the past year that changed composer.lock, installs it without running any package code, and records what `ankus check` reports.",
+    "since": "12 months ago",
+    "apps": [
+        { "name": "BookStack", "repo": "https://github.com/BookStackApp/BookStack.git" },
+        { "name": "Firefly III", "repo": "https://github.com/firefly-iii/firefly-iii.git" }
+    ]
+}

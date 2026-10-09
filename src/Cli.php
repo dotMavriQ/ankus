@@ -138,6 +138,7 @@ final class Cli
                 'consequences' => $c->consequences,
                 'lost' => $c->lost,
                 'lost_via' => $c->lostVia,
+                'code_changed_same_version' => $c->codeChangedSameVersion,
                 'new_triggers' => $c->newTriggers,
                 'evidence' => $c->result === null ? [] : array_map(
                     static fn (Finding $f) => $f->toArray(),
@@ -168,6 +169,9 @@ final class Cli
                 continue;
             }
             $this->say("  ✗ {$r->name} [$ver]");
+            if ($c->codeChangedSameVersion) {
+                $this->say("      + code changed, but the version is still {$r->version}: was this release rewritten, or vendor/ edited?");
+            }
             foreach ($c->newTriggers as $t) {
                 $this->say('      + ' . self::describeTrigger($t) . ': ' . ($r->triggers()[$t] ?? ''));
             }

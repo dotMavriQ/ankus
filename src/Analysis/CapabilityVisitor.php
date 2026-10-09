@@ -460,7 +460,9 @@ final class CapabilityVisitor extends NodeVisitorAbstract
         if (!$isUrl && !$v->tainted && $v->isUnknown()) {
             $this->result->callerPath($this->relFile, $node->getStartLine());
         }
-        if ($v->tainted && !$isUrl && $mayBeFile) {
+        // A path we can't resolve might be a URL, but nobody hashes or parses an
+        // INI file over HTTP: only functions used to fetch content count here.
+        if ($v->tainted && !$isUrl && $mayBeFile && !in_array($fn, ['md5_file', 'sha1_file', 'hash_file', 'parse_ini_file'], true)) {
             $this->add(C::Network, $fn . '()', $node, 'path built from unresolvable input; may be a URL');
         }
         // A concrete first argument was already reported as an encoded literal.

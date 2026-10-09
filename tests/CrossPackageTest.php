@@ -185,7 +185,10 @@ final class CrossPackageTest extends TestCase
     #[DataProvider('harmless')]
     public function testReferencesThatGrantNothingAreQuiet(string $code): void
     {
-        self::assertNull($this->acmeChange($code));
+        $change = $this->acmeChange($code);
+
+        self::assertFalse($change?->isViolation() ?? false);
+        self::assertSame([], $change->gainedVia ?? []);
     }
 
     public function testDependencyThatGainsACapabilityIsReportedOnce(): void
@@ -195,7 +198,7 @@ final class CrossPackageTest extends TestCase
         $acme = "<?php\nnamespace Acme;\n\\Fake\\Quiet\\Q::m();\n";
 
         $before = $this->scan('before', ['fake/quiet' => $quietBefore, 'acme/lib' => $acme]);
-        $after = $this->scan('after', ['fake/quiet' => $quietAfter, 'acme/lib' => $acme]);
+        $after = $this->scan('after', ['fake/quiet' => $quietAfter, 'acme/lib' => $acme], ['fake/quiet' => '1.1.0']);
         $changes = Lockfile::fromResults($before)->compare($after);
         $byName = [];
         foreach ($changes as $c) {
@@ -219,10 +222,68 @@ final class CrossPackageTest extends TestCase
         self::assertSame([], Lockfile::read($file)->compare($after));
     }
 
+    public function testSameVersionWithDifferentCodeIsReported(): void
+    {
+        $before = $this->scan('before', $this->packages(self::ACME_BEFORE));
+        $after = $this->scan('after', $this->packages(str_replace("'hi'", "'hello'", self::ACME_BEFORE)));
+        $change = $this->find(Lockfile::fromResults($before)->compare($after), 'acme/lib');
+
+        self::assertNotNull($change);
+        self::assertTrue($change->codeChangedSameVersion);
+        self::assertTrue($change->isViolation());
+    }
+
+    private const TOOL_BEFORE = "<?php\nnamespace Fake\\Tool;\nfinal class T { public static function m(): string { return 'x'; } public static function run(): void { exec('id'); } }\n";
+    private const TOOL_AFTER = "<?php\nnamespace Fake\\Tool;\nfinal class T { public static function m(): string { exec('id'); return 'x'; } public static function run(): void { exec('id'); } }\n";
+
+    public function testUnchangedPackageReachingACapabilityThroughAChangedDependencyIsNotAViolation(): void
+    {
+        // fake/tool already had EXEC; only which of its methods reach it changed.
+        $acme = "<?php\nnamespace Acme;\n\\Fake\\Tool\\T::m();\n";
+        $changes = Lockfile::fromResults($this->scan('before', ['fake/tool' => self::TOOL_BEFORE, 'acme/lib' => $acme]))
+            ->compare($this->scan('after', ['fake/tool' => self::TOOL_AFTER, 'acme/lib' => $acme], ['fake/tool' => '1.1.0']));
+
+        self::assertSame([], array_values(array_filter($changes, static fn (Change $c) => $c->isViolation())));
+        self::assertSame(['EXEC via fake/tool'], $this->find($changes, 'acme/lib')?->consequences);
+    }
+
+    public function testUpdatedPackageStillCallingTheSameChangedClassIsNotAViolation(): void
+    {
+        $before = "<?php\nnamespace Acme;\n\\Fake\\Tool\\T::m();\n";
+        $after = "<?php\nnamespace Acme;\n// unrelated change\n\\Fake\\Tool\\T::m();\n";
+        $changes = Lockfile::fromResults($this->scan('before', ['fake/tool' => self::TOOL_BEFORE, 'acme/lib' => $before]))
+            ->compare($this->scan('after', ['fake/tool' => self::TOOL_AFTER, 'acme/lib' => $after], ['fake/tool' => '1.1.0', 'acme/lib' => '1.1.0']));
+
+        self::assertFalse($this->find($changes, 'acme/lib')?->isViolation() ?? false);
+    }
+
+    public function testUpdatedPackageCallingADangerousMethodOfAnAlreadyUsedClassIsAViolation(): void
+    {
+        // Same class as before, but now the method that runs commands, and fake/tool did not change.
+        $before = "<?php\nnamespace Acme;\n\\Fake\\Tool\\T::m();\n";
+        $after = "<?php\nnamespace Acme;\n\\Fake\\Tool\\T::m();\n\\Fake\\Tool\\T::run();\n";
+        $changes = Lockfile::fromResults($this->scan('before', ['fake/tool' => self::TOOL_BEFORE, 'acme/lib' => $before]))
+            ->compare($this->scan('after', ['fake/tool' => self::TOOL_BEFORE, 'acme/lib' => $after], ['acme/lib' => '1.1.0']));
+
+        self::assertSame(['EXEC via fake/tool'], $this->find($changes, 'acme/lib')?->gainedVia);
+    }
+
+    /** @param list<Change> $changes */
+    private function find(array $changes, string $name): ?Change
+    {
+        foreach ($changes as $c) {
+            if ($c->name() === $name) {
+                return $c;
+            }
+        }
+
+        return null;
+    }
+
     private function acmeChange(string $code): ?Change
     {
         $before = $this->scan('before', $this->packages(self::ACME_BEFORE));
-        $after = $this->scan('after', $this->packages("<?php\nnamespace Acme;\n$code\n"));
+        $after = $this->scan('after', $this->packages("<?php\nnamespace Acme;\n$code\n"), ['acme/lib' => '1.1.0']);
         foreach (Lockfile::fromResults($before)->compare($after) as $change) {
             if ($change->name() === 'acme/lib') {
                 return $change;
@@ -242,16 +303,17 @@ final class CrossPackageTest extends TestCase
      * Writes a vendor/ directory with one src/code.php per package and scans it.
      *
      * @param array<string, string> $packages name => PHP source
+     * @param array<string, string> $versions name => version, default 1.0.0
      * @return list<PackageResult>
      */
-    private function scan(string $label, array $packages): array
+    private function scan(string $label, array $packages, array $versions = []): array
     {
         $vendor = "$this->tmp/$label/vendor";
         $installed = [];
         foreach ($packages as $name => $code) {
             @mkdir("$vendor/$name/src", 0700, true);
             file_put_contents("$vendor/$name/src/code.php", $code);
-            $installed[] = ['name' => $name, 'version' => '1.0.0', 'install-path' => "../$name"];
+            $installed[] = ['name' => $name, 'version' => $versions[$name] ?? '1.0.0', 'install-path' => "../$name"];
         }
         @mkdir("$vendor/composer", 0700, true);
         file_put_contents("$vendor/composer/installed.json", json_encode(['packages' => $installed]));

@@ -11,3 +11,4 @@
 /build              export-ignore
 /phpstan.neon.dist  export-ignore
 /CONTRIBUTING.md    export-ignore
+/replay             export-ignore

@@ -68,9 +68,15 @@ final class PackageResult
      * Capabilities reached through other packages, filled in by CapabilityGraph
      * after all packages are analyzed (never cached).
      *
-     * @var array<string, array<string, array{string, int, string, string, string}>> capability => origin package => [file, line, context, target, package called directly]
+     * @var array<string, array<string, array{string, int, string, string, string, string}>> capability => origin package => [file, line, context, target, package called directly, class or function called]
      */
     public array $via = [];
+
+    /** SHA-256 over the analyzed PHP files: changes exactly when the package's code does. */
+    public string $contentHash = '';
+
+    /** @var array<string, true> classes ("vendor\\x\\client") and functions ("fn:vendor\\run") in other packages that this one calls, filled in by CapabilityGraph */
+    public array $callsClasses = [];
 
     /** @var array<string, true> packages whose code this one calls directly, filled in by CapabilityGraph */
     public array $callsInto = [];

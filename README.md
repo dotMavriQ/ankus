@@ -238,6 +238,7 @@ application, exactly as `ankus lock` writes it:
     "packages": {
         "laravel/pint": {
             "version": "v1.32.1",
+            "code": "0514dc3e0adcc6f497d0907492c9b1c1a2772dc1243ddc5e67b6d3cf5f1bf9db",
             "capabilities": [],
             "via": {
                 "ENV": [
@@ -251,10 +252,10 @@ application, exactly as `ankus lock` writes it:
                 ]
             },
             "calls_into": [
-                "laravel/framework",
-                "symfony/console",
-                "symfony/finder",
-                "symfony/process"
+                "illuminate\\support\\processutils",
+                "symfony\\component\\console\\input\\inputinterface",
+                "symfony\\component\\finder\\finder",
+                "symfony\\component\\process\\phpexecutablefinder"
             ],
             "triggers": []
         }
@@ -264,10 +265,11 @@ application, exactly as `ankus lock` writes it:
 
 | Field | Meaning |
 |---|---|
-| `version` | The installed version, for reference. Changing it alone is not a failure. |
+| `version` | The installed version. Changing it alone is not a failure. |
+| `code` | A SHA-256 hash of the package's PHP files. |
 | `capabilities` | Capabilities of the package's own code. |
 | `via` | Capabilities reached by calling other packages, and which packages they are in. |
-| `calls_into` | Every package whose code this one calls directly. Used to tell a package that started using something new apart from one whose dependency changed. |
+| `calls_into` | Classes and functions in other packages that this one calls. Used to tell a package that started using something new apart from one whose dependency changed. |
 | `triggers` | See the triggers table under [Capabilities](#capabilities). |
 
 File names and line numbers are not stored, so the lock file only changes
@@ -275,9 +277,22 @@ when what a package can do changes, not every time its code moves around.
 Treat a change to it in a pull request like a change to code: someone should
 read it.
 
-`ankus check` fails when a package gains a capability, a `via` capability or
-a trigger. A new package fails if it has any of them. A removed package, or
-one that lost capabilities, is reported but does not fail.
+`ankus check` fails when:
+
+- a package gains a capability, a `via` capability or a trigger. A new
+  package fails if it has any of them.
+- a package's code changed but its version did not. A released version should
+  never change; when it does, a tag was rewritten (as in the Laravel-Lang and
+  bfunky attacks) or someone edited `vendor/`. Branch versions such as
+  `dev-main` are exempt.
+
+A `via` capability does not fail `check` for a package whose own code is
+unchanged, or that only calls classes it already called whose package changed
+in the same update. In those cases the change happened elsewhere, and that
+package is checked on its own.
+
+A removed package, or one that lost capabilities, is reported but does not
+fail.
 
 A lock file written by an older version of ankus (`"lock-version": 1`) is
 rejected with a message asking you to run `ankus lock` again.
@@ -362,6 +377,7 @@ composer install
 vendor/bin/phpunit             # unit tests and fixtures
 php corpus/run.php             # replays real attacks; needs network, set GITHUB_TOKEN to avoid rate limits
 php oracle/run.php             # compares predictions with runtime behaviour; needs Xdebug and bubblewrap, slow
+php replay/run.php             # replays a year of real updates of two applications; slow
 ```
 
 **Fixtures** (`tests/fixtures/`). Each file states the exact set of
@@ -395,6 +411,26 @@ fail `ankus check` with every expected capability:
 
 Samples are downloaded by commit hash and only parsed, never executed. CI runs
 the corpus on every push.
+
+**Real update history** (`replay/`). Two open-source Laravel applications,
+BookStack and Firefly III, with every `composer.lock` change from the past
+year replayed in order: install the lock (with plugins and scripts off), run
+`ankus check`, then `ankus lock` as a developer accepting the update would.
+
+| | Updates | `check` failed |
+|---|---|---|
+| BookStack | 26 | 10 |
+| Firefly III | 50 | 15 |
+| **Total** | **76** | **25** |
+
+That is about one review a month per application. Every failure was read by
+hand. All but one were real changes in what a dependency can do, for example
+nette/utils 4.1.4 adding a `Process` class that runs commands, firebase/php-jwt
+starting to use phpseclib, sabberworm/php-css-parser adding code that runs on
+every request, or a new dependency arriving. The one false alarm, a hashing
+function on a path ankus could not resolve being treated as possible
+networking, is fixed. 21 of the 25 failures involve a production dependency,
+not only development tools. Details are in `replay/results.json`.
 
 **Runtime comparison** (`oracle/`). Runs the test suites of 20 widely used
 packages (Symfony components, monolog, guzzlehttp/psr7, phpdotenv, ramsey/uuid,

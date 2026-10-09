@@ -36,9 +36,11 @@ final class PackageAnalyzer
         // Files are parsed twice rather than held in memory: a large
         // framework package would otherwise need gigabytes of ASTs.
         $files = [];
+        $code = hash_init('sha256');
         foreach (self::phpFiles($dir, $skip) as $abs) {
             $rel = substr($abs, strlen(rtrim($dir, '/')) + 1);
             $result->files++;
+            hash_update($code, $rel . "\0" . (@hash_file('sha256', $abs) ?: 'unreadable') . "\0");
             $size = @filesize($abs);
             if ($size === false) {
                 continue;
@@ -49,6 +51,7 @@ final class PackageAnalyzer
             }
             $files[$abs] = $rel;
         }
+        $result->contentHash = hash_final($code);
 
         // Pass 1: declarations across the whole package.
         $index = new PackageIndex();
@@ -61,7 +64,13 @@ final class PackageAnalyzer
             }
             $index->absFile = $abs;
             $index->relFile = $rel;
-            $collect->traverse($ast);
+            try {
+                $collect->traverse($ast);
+            } catch (Error $e) {
+                // Parses, but is not valid PHP (e.g. two `use` statements for the same name).
+                $result->add(new Finding(Capability::Unanalyzable, 'names', $rel, max(1, $e->getStartLine()), '<file>', $e->getRawMessage()));
+                unset($files[$abs]);
+            }
         }
 
         $result->classes = $index->classes;
@@ -74,7 +83,11 @@ final class PackageAnalyzer
         // traversal reaching them.
         $resolve = new NodeTraverser(new NameResolver());
         foreach ($files as $abs => $rel) {
-            $ast = $resolve->traverse($this->parse($abs, $rel, null) ?? []);
+            try {
+                $ast = $resolve->traverse($this->parse($abs, $rel, null) ?? []);
+            } catch (Error) {
+                continue; // already reported in pass 1
+            }
             (new NodeTraverser(new CapabilityVisitor($index, $result, $abs, $rel)))->traverse($ast);
         }
 

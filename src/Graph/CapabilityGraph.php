@@ -25,6 +25,7 @@ final class CapabilityGraph
         foreach ($results as $r) {
             $r->via = [];
             $r->callsInto = [];
+            $r->callsClasses = [];
             foreach (array_keys($r->classes) as $class) {
                 $owner[$class] = $r->name;
             }
@@ -125,10 +126,12 @@ final class CapabilityGraph
                         continue;
                     }
                     $r->callsInto[$targetOwner] = true;
+                    $key = str_starts_with($resolved, 'fn:') ? $resolved : (string) strstr($resolved, '::', true);
+                    $r->callsClasses[$key] = true;
                     foreach ($caps[$resolved] ?? [] as $cap => $origins) {
                         foreach (array_keys($origins) as $origin) {
                             if ($origin !== $r->name) {
-                                $r->via[$cap][$origin] ??= [$file, $line, $context, $display, $targetOwner];
+                                $r->via[$cap][$origin] ??= [$file, $line, $context, $display, $targetOwner, $key];
                             }
                         }
                     }
@@ -136,6 +139,7 @@ final class CapabilityGraph
             }
             ksort($r->via);
             ksort($r->callsInto);
+            ksort($r->callsClasses);
             foreach ($r->via as &$origins) {
                 ksort($origins);
             }
