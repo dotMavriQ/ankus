@@ -40,9 +40,33 @@ code it analyzes.
 
 ## Installation
 
-ankus is not on Packagist yet; until it is, install it from GitHub.
+### PHAR (recommended)
 
-### Standalone (recommended)
+A single self-contained file, attached to every
+[release](https://github.com/dotMavriQ/ankus/releases):
+
+```sh
+curl -sSLO https://github.com/dotMavriQ/ankus/releases/latest/download/ankus.phar
+curl -sSLO https://github.com/dotMavriQ/ankus/releases/latest/download/ankus.phar.sha256
+sha256sum -c ankus.phar.sha256
+chmod +x ankus.phar
+mv ankus.phar ~/.local/bin/ankus
+```
+
+Each release is built by GitHub Actions from the tagged commit, with a signed
+record of how it was built. With the GitHub CLI you can check that the file
+you downloaded is that build:
+
+```sh
+gh attestation verify ankus.phar --repo dotMavriQ/ankus
+```
+
+Run that before the `mv`; it exits with an error if the file does not match.
+
+The PHAR contains its own copy of `nikic/php-parser`, so it never uses
+anything from the project it checks.
+
+### From source
 
 Install ankus in its own directory, outside the projects you check:
 
@@ -55,11 +79,13 @@ ln -s ~/.local/share/ankus/bin/ankus ~/.local/bin/ankus
 `ankus` is now on your `PATH` (assuming `~/.local/bin` is). Run it from a
 project's root directory.
 
-This is recommended because ankus then runs entirely on its own code. When it
-is installed inside a project, it uses that project's copy of
+Like the PHAR, this runs entirely on ankus's own code. When ankus is
+installed inside a project instead, it uses that project's copy of
 `nikic/php-parser`, which is one of the dependencies you are trying to check.
 
 ### As a development dependency
+
+ankus is not on Packagist yet; until it is, add the GitHub repository:
 
 ```sh
 composer config repositories.ankus vcs https://github.com/dotMavriQ/ankus
@@ -113,17 +139,17 @@ loaded, so also run `ankus check` before your test suite or application starts.
 
 ## Using ankus in CI
 
-GitHub Actions, with ankus checked out next to your project as a standalone
-tool:
+GitHub Actions, using a pinned, verified release:
 
 ```yaml
 - uses: actions/checkout@v4
 
-- name: Check out ankus
-  uses: actions/checkout@v4
-  with:
-    repository: dotMavriQ/ankus
-    path: .ankus
+- name: Install ankus
+  run: |
+    curl -sSL -o "$RUNNER_TEMP/ankus.phar" https://github.com/dotMavriQ/ankus/releases/download/v0.1.0/ankus.phar
+    gh attestation verify "$RUNNER_TEMP/ankus.phar" --repo dotMavriQ/ankus
+  env:
+    GH_TOKEN: ${{ github.token }}
 
 - uses: shivammathur/setup-php@v2
   with:
@@ -132,11 +158,8 @@ tool:
 - name: Download dependencies without running any of their code
   run: composer install --no-plugins --no-scripts --no-interaction --no-progress
 
-- name: Install ankus
-  run: composer install --no-dev --no-interaction --no-progress --working-dir=.ankus
-
 - name: Check dependency capabilities
-  run: php .ankus/bin/ankus check
+  run: php "$RUNNER_TEMP/ankus.phar" check
 
 - name: Finish installing (plugins and scripts run now)
   run: composer install --no-interaction --no-progress

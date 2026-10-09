@@ -69,3 +69,36 @@ jobs:
       - run: php corpus/run.php
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  readme-ci-example:
+    # The "Using ankus in CI" example from the README, as written, on a small project.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: demo
+    steps:
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - name: A small project
+        working-directory: .
+        run: |
+          mkdir demo
+          echo '{"require": {"guzzlehttp/guzzle": "^7.9"}}' > demo/composer.json
+          composer update --no-plugins --no-scripts --no-interaction --no-progress --working-dir=demo
+
+      # From here on, the steps are the README's.
+      - name: Install ankus
+        run: |
+          curl -sSL -o "$RUNNER_TEMP/ankus.phar" https://github.com/dotMavriQ/ankus/releases/download/v0.1.0/ankus.phar
+          gh attestation verify "$RUNNER_TEMP/ankus.phar" --repo dotMavriQ/ankus
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Download dependencies without running any of their code
+        run: composer install --no-plugins --no-scripts --no-interaction --no-progress
+      - name: Approve the current state (in a real project, ankus.lock is committed)
+        run: php "$RUNNER_TEMP/ankus.phar" lock
+      - name: Check dependency capabilities
+        run: php "$RUNNER_TEMP/ankus.phar" check
+      - name: Finish installing (plugins and scripts run now)
+        run: composer install --no-interaction --no-progress
