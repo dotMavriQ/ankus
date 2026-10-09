@@ -40,15 +40,14 @@ code it analyzes.
 
 ## Installation
 
-ankus is not on Packagist yet, and the repository is private, so you need read
-access to `dotMavriQ/ankus` on GitHub.
+ankus is not on Packagist yet; until it is, install it from GitHub.
 
 ### Standalone (recommended)
 
 Install ankus in its own directory, outside the projects you check:
 
 ```sh
-git clone git@github.com:dotMavriQ/ankus.git ~/.local/share/ankus
+git clone https://github.com/dotMavriQ/ankus.git ~/.local/share/ankus
 composer install --no-dev --working-dir="$HOME/.local/share/ankus"
 ln -s ~/.local/share/ankus/bin/ankus ~/.local/bin/ankus
 ```
@@ -67,11 +66,6 @@ composer config repositories.ankus vcs https://github.com/dotMavriQ/ankus
 composer require --dev ankus/ankus:dev-master
 vendor/bin/ankus --version
 ```
-
-Because the repository is private, Composer needs a GitHub token to download
-it. If `composer require` fails with a 404, run
-`composer config --global github-oauth.github.com <token>` first, or set
-`COMPOSER_AUTH`.
 
 Installed this way, ankus does **not** load your project's
 `vendor/autoload.php`, so no code from your dependencies runs when you start
@@ -130,7 +124,6 @@ tool:
   with:
     repository: dotMavriQ/ankus
     path: .ankus
-    token: ${{ secrets.ANKUS_READ_TOKEN }}
 
 - uses: shivammathur/setup-php@v2
   with:
@@ -148,9 +141,6 @@ tool:
 - name: Finish installing (plugins and scripts run now)
   run: composer install --no-interaction --no-progress
 ```
-
-`ANKUS_READ_TOKEN` is a repository secret holding a GitHub token that can read
-`dotMavriQ/ankus`. It is needed only while that repository is private.
 
 The job fails at the check step if any package gained a capability. The
 `ankus.lock` committed in your repository is the approved state.
